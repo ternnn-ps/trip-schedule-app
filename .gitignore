@@ -1,0 +1,26 @@
+.DS_Store
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Node / Next.js frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.vercel/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Java / Maven backend
+backend/target/
+backend/.idea/
+backend/*.iml
+/target/
+/HELP.md
+
+# IDEs
+.idea/
+.vscode/
