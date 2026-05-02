@@ -183,7 +183,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           >
             <MenuIcon />
           </IconButton>
-          <Typography sx={{ fontWeight: 800 }}>Travel Schedule</Typography>
+          <Typography sx={{ fontWeight: 800 }}>Trip Schedule</Typography>
           <Box sx={{ ml: "auto" }}>{themeToggle}</Box>
         </Box>
 

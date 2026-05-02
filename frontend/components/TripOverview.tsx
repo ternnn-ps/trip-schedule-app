@@ -285,7 +285,7 @@ export default function TripOverview() {
               Overview
             </Typography>
             <Typography variant="h4" sx={{ fontWeight: 900, mt: 0.5 }}>
-              Travel Schedule
+              Trip Schedule
             </Typography>
             <Typography sx={{ color: "var(--muted)", mt: 0.75 }}>
               Manage trips, compare schedule progress, and open any itinerary quickly.
@@ -482,7 +482,7 @@ export default function TripOverview() {
               No trips yet
             </Typography>
             <Typography sx={{ color: "var(--muted)", mt: 0.75 }}>
-              Create a trip to start building your travel schedule.
+              Create a trip to start building your schedule.
             </Typography>
             <IconButton
               aria-label="Add trip"
