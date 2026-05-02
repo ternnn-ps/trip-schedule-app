@@ -97,7 +97,7 @@ export default function LoginClient() {
                 <MapIcon />
               </Box>
               <Typography variant="overline" sx={{ color: "var(--muted)", fontWeight: 900 }}>
-                Travel Schedule App
+                Trip Schedule App
               </Typography>
               <Typography variant="h4" sx={{ fontWeight: 950, mt: 0.5 }}>
                 Sign in to your travel workspace
@@ -159,13 +159,13 @@ export default function LoginClient() {
                   startIcon={<LoginIcon />}
                   disabled={loading || !loginIdentifier.trim() || !password.trim()}
                 >
-                  {loading ? <CircularProgress color="inherit" size={20} /> : "Continue"}
+                  {loading ? <CircularProgress color="inherit" size={20} /> : "Sign In"}
                 </Button>
               </Stack>
             </Box>
 
             <Typography sx={{ color: "var(--muted)", fontSize: "0.86rem" }}>
-              Note: password is required here, but real password verification still needs a backend auth endpoint.
+              {/* Note: password is required here, but real password verification still needs a backend auth endpoint. */}
             </Typography>
           </Stack>
         </CardContent>
