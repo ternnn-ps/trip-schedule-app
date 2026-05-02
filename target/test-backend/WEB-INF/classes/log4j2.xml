@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="error" monitorInterval="30">
+    <Properties>
+        <Property name="LOG_PATTERN">%d{yyyy/MM/dd HH:mm:ss} [%-6p] [%t] %C.%M(%F:%L) - %m%n</Property>
+        <Property name="LOG_PATH">/app/test/log</Property>
+        <Property name="LOG_NAME">test</Property>
+    </Properties>
+	
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT" follow="true">
+            <PatternLayout pattern="${LOG_PATTERN}" />
+        </Console>
+		
+        <RollingFile name="RollingFile" fileName="${LOG_PATH}/${LOG_NAME}.log"
+                             filePattern="${LOG_PATH}/$${date:yyyy-MM}/${LOG_NAME}-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${LOG_PATTERN}" />
+            <Policies>
+                <!--<OnStartupTriggeringPolicy />-->
+                <!--<SizeBasedTriggeringPolicy size="10 MB" />-->
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+        </RollingFile>
+    </Appenders>
+	
+    <Loggers>
+        <Root level="DEBUG">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="RollingFile" />
+        </Root>
+        <Logger name="org.springframework" level="WARN">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile" />
+        </Logger>
+        <Logger name="org.hibernate" level="WARN">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile" />
+        </Logger>
+        <Logger name="com.zaxxer" level="WARN">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile" />
+        </Logger>
+        <Logger name="net.sf.jasperreports" level="WARN">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile" />
+        </Logger>
+        <Logger name="org.apache.commons" level="WARN">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile" />
+        </Logger>
+    </Loggers>
+</Configuration>
