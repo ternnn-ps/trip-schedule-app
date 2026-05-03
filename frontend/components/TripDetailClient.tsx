@@ -574,7 +574,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
               <Typography sx={{ color: "var(--muted)", fontSize: "0.92rem", mt: 0.5 }}>
                 {trip.allUsers
                   ? "Every database user can view and edit this trip."
-                  : "Selected users can view and edit this trip."}
+                  : "Selected users can edit this trip."}
               </Typography>
               <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: "wrap" }}>
                 {trip.allUsers ? (

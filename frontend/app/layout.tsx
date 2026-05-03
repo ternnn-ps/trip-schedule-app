@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 import { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: "Travel App",
+  title: "Trip Schedule",
   description: "Plan trips, stops, and shared traveler locations.",
   icons: {
     icon: "/icon.svg",
