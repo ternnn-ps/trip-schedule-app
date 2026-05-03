@@ -414,8 +414,14 @@ html[data-theme="dark"] .sidebar-shell {
 }
 
 .trip-user-panel-actions {
+  display: grid !important;
   align-items: stretch;
+  gap: 10px;
   min-width: 180px;
+}
+
+.trip-user-panel-actions .MuiButton-root {
+  justify-content: flex-start;
 }
 
 .trip-note {
@@ -591,6 +597,11 @@ html[data-theme="dark"] .map-preview {
 
   .trip-user-panel-actions {
     align-items: flex-end;
+    grid-template-columns: repeat(2, minmax(112px, auto));
+  }
+
+  .trip-user-panel-actions .MuiButton-root {
+    justify-content: center;
   }
 }
 
