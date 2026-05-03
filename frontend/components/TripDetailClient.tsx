@@ -663,18 +663,19 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
               </Typography>
             </Box>
             <Stack
-              direction={{ xs: "column", sm: "row" }}
+              className="itinerary-actions"
+              direction="row"
               spacing={1}
-              sx={{ alignItems: { xs: "stretch", sm: "center" }, width: { xs: "100%", sm: "auto" } }}
+              sx={{ alignItems: "center", flexWrap: "wrap", justifyContent: { xs: "flex-start", sm: "flex-end" } }}
             >
-              <Chip label={`${trip.plans.length} stops`} />
+              <Chip className="itinerary-stop-chip" label={`${trip.plans.length} stops`} size="small" />
               {canEditCurrentTrip ? (
                 <Button
                   variant="contained"
+                  size="small"
                   startIcon={<AddIcon />}
-                  className="travel-primary-button"
+                  className="travel-primary-button itinerary-add-plan-button"
                   onClick={openAddPlanDialog}
-                  sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                   Add Plan
                 </Button>

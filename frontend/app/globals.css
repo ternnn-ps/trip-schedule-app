@@ -364,6 +364,22 @@ html[data-theme="dark"] .sidebar-shell {
   text-transform: none !important;
 }
 
+.itinerary-actions {
+  width: auto;
+}
+
+.itinerary-stop-chip {
+  height: 34px !important;
+  font-weight: 800;
+}
+
+.itinerary-add-plan-button {
+  min-width: 0 !important;
+  min-height: 34px !important;
+  padding: 6px 12px !important;
+  white-space: nowrap;
+}
+
 .add-trip-button {
   width: 42px !important;
   height: 42px !important;
@@ -525,6 +541,11 @@ html[data-theme="dark"] .map-preview {
   .travel-trip-card .travel-primary-button {
     flex: 1 1 auto;
     width: 100%;
+  }
+
+  .section-heading .itinerary-add-plan-button {
+    flex: 0 0 auto;
+    width: auto;
   }
 
   .travel-trip-card .MuiCardContent-root,
