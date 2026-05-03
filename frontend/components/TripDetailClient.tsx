@@ -614,7 +614,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                 Trip Users
               </Typography>
               <Typography sx={{ color: "var(--muted)", fontSize: "0.92rem", mt: 0.5 }}>
-                Users added here have permission to view and edit this trip.
+                
               </Typography>
               <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: "wrap" }}>
                 {trip.users.length > 0 ? (
