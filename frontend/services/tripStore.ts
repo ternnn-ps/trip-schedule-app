@@ -103,6 +103,7 @@ function normalizeTrip(trip: Trip): Trip {
           ...plan,
           latitude: plan.latitude ?? "",
           longitude: plan.longitude ?? "",
+          googleMapUrl: plan.googleMapUrl ?? "",
         }))
       : [],
   };

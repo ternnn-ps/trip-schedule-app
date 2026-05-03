@@ -19,6 +19,8 @@ import {
   subscribeAuth,
 } from "@/services/authStore";
 import { formatDateRange, getTripDurationDays, parseTripDateRange } from "@/services/dateRange";
+import { downloadTripReport } from "@/services/tripPdf";
+import { getGoogleMapUrl, parseGoogleMapUrl } from "@/services/googleMaps";
 import { canEditTrip } from "@/services/tripPermissions";
 import { UserService } from "@/services/UserService";
 import LocationPicker from "@/components/LocationPicker";
@@ -27,7 +29,9 @@ import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
+import DownloadIcon from "@mui/icons-material/Download";
 import EditIcon from "@mui/icons-material/Edit";
+import ImageIcon from "@mui/icons-material/Image";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import MapIcon from "@mui/icons-material/Map";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -70,6 +74,7 @@ const emptyPlanForm = {
   place: "",
   latitude: "",
   longitude: "",
+  googleMapUrl: "",
 };
 
 const emptyTripEditForm = {
@@ -152,6 +157,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
   const [usersError, setUsersError] = useState("");
   const [userLocationDialog, setUserLocationDialog] = useState<UserLocationDialogState>(null);
   const [error, setError] = useState("");
+  const [mapUrlMessage, setMapUrlMessage] = useState("");
 
   useEffect(() => {
     void syncTripsFromBackend();
@@ -258,6 +264,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
     setForm(emptyPlanForm);
     setEditingPlanId(null);
     setError("");
+    setMapUrlMessage("");
     setPlanDialogOpen(true);
   }
 
@@ -274,10 +281,40 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       place: plan.place,
       latitude: plan.latitude ?? "",
       longitude: plan.longitude ?? "",
+      googleMapUrl: plan.googleMapUrl ?? "",
     });
     setEditingPlanId(plan.id);
     setError("");
+    setMapUrlMessage("");
     setPlanDialogOpen(true);
+  }
+
+  function handleGoogleMapUrlChange(value: string) {
+    const parsedPlace = parseGoogleMapUrl(value);
+
+    setForm((currentForm) => ({
+      ...currentForm,
+      googleMapUrl: value,
+      place: parsedPlace?.placeName && !currentForm.place.trim() ? parsedPlace.placeName : currentForm.place,
+      latitude: parsedPlace?.latitude ?? currentForm.latitude,
+      longitude: parsedPlace?.longitude ?? currentForm.longitude,
+    }));
+
+    if (!value.trim()) {
+      setMapUrlMessage("");
+      return;
+    }
+
+    if (!parsedPlace) {
+      setMapUrlMessage("Paste a Google Maps URL to link this stop.");
+      return;
+    }
+
+    setMapUrlMessage(
+      parsedPlace.latitude && parsedPlace.longitude
+        ? "Location found from Google Maps URL."
+        : "Short Google Maps links can be saved, but coordinates need to be selected on the map.",
+    );
   }
 
   function handleSavePlan(event: FormEvent<HTMLFormElement>) {
@@ -318,6 +355,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       place: form.place.trim(),
       latitude: form.latitude.trim(),
       longitude: form.longitude.trim(),
+      googleMapUrl: form.googleMapUrl.trim(),
     };
 
     if (editingPlanId) {
@@ -330,6 +368,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
     setEditingPlanId(null);
     setPlanDialogOpen(false);
     setError("");
+    setMapUrlMessage("");
   }
 
   function openDeletePlanDialog(plan: TripPlanItem) {
@@ -555,6 +594,15 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
               <MoreVertIcon />
             </IconButton>
           ) : null}
+          <Button
+            type="button"
+            variant="outlined"
+            size="small"
+            startIcon={<DownloadIcon />}
+            onClick={() => downloadTripReport(trip)}
+          >
+            Download
+          </Button>
         </Stack>
       </Box>
 
@@ -665,7 +713,10 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                   {day}
                 </Typography>
                 <Stack spacing={1.5}>
-                  {dayPlans.map((plan) => (
+                  {dayPlans.map((plan) => {
+                    const googleMapUrl = getGoogleMapUrl(plan);
+
+                    return (
                     <Card key={plan.id} className="travel-plan-card">
                       <CardContent sx={{ p: 2.25 }}>
                         <Stack spacing={1.5}>
@@ -674,22 +725,52 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                               <Typography sx={{ fontWeight: 900 }}>{plan.place}</Typography>
                               <Typography sx={{ color: "var(--muted)" }}>{plan.detail}</Typography>
                               {plan.latitude && plan.longitude ? (
-                                <Box sx={{ mt: 1.5 }}>
+                                <Box className="plan-place-panel" sx={{ mt: 1.5 }}>
                                   <LocationPicker
                                     latitude={plan.latitude}
                                     longitude={plan.longitude}
                                     readOnly
                                   />
+                                  <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", mt: 1 }}>
+                                    <Button
+                                      component="a"
+                                      href={googleMapUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      startIcon={<MapIcon />}
+                                      size="small"
+                                      sx={{ px: 0 }}
+                                    >
+                                      Open map
+                                    </Button>
+                                    <Button
+                                      component="a"
+                                      href={googleMapUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      startIcon={<ImageIcon />}
+                                      size="small"
+                                      sx={{ px: 0 }}
+                                    >
+                                      Photos & reviews
+                                    </Button>
+                                  </Stack>
+                                </Box>
+                              ) : plan.googleMapUrl ? (
+                                <Box className="plan-place-panel" sx={{ mt: 1.5 }}>
+                                  <Typography sx={{ color: "var(--muted)", fontSize: "0.88rem" }}>
+                                    Google Maps details are linked for this stop.
+                                  </Typography>
                                   <Button
                                     component="a"
-                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${plan.latitude},${plan.longitude}`)}`}
+                                    href={googleMapUrl}
                                     target="_blank"
                                     rel="noreferrer"
-                                    startIcon={<MapIcon />}
+                                    startIcon={<ImageIcon />}
                                     size="small"
                                     sx={{ mt: 1, px: 0 }}
                                   >
-                                    Open map
+                                    Open photos & reviews
                                   </Button>
                                 </Box>
                               ) : null}
@@ -711,7 +792,8 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                         </Stack>
                       </CardContent>
                     </Card>
-                  ))}
+                    );
+                  })}
                 </Stack>
               </Box>
             ))}
@@ -966,6 +1048,14 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
               />
             </Box>
             <TextField label="Place" value={form.place} onChange={(event) => setForm({ ...form, place: event.target.value })} placeholder="Train station, hotel, cafe..." fullWidth />
+            <TextField
+              label="Google Maps URL"
+              value={form.googleMapUrl}
+              onChange={(event) => handleGoogleMapUrlChange(event.target.value)}
+              placeholder="Paste Google Maps link"
+              helperText={mapUrlMessage || "Optional. If the URL includes coordinates, the map pin will update automatically."}
+              fullWidth
+            />
             <Box>
               <Typography sx={{ mb: 1, color: "var(--muted)", fontWeight: 800 }}>
                 Pin Location

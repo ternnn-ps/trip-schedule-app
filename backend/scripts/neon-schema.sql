@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS ms_trip_plan (
     place varchar(255),
     latitude varchar(255),
     longitude varchar(255),
+    google_map_url varchar(1000),
     trip_id varchar(255),
     created_date timestamp,
     updated_date timestamp,
@@ -102,6 +103,7 @@ ALTER TABLE ms_trip ALTER COLUMN record_status SET DEFAULT 'A';
 ALTER TABLE ms_trip_plan ALTER COLUMN record_status SET DEFAULT 'A';
 
 ALTER TABLE ms_trip ADD COLUMN IF NOT EXISTS all_users boolean DEFAULT false;
+ALTER TABLE ms_trip_plan ADD COLUMN IF NOT EXISTS google_map_url varchar(1000);
 ALTER TABLE ms_user ADD COLUMN IF NOT EXISTS last_latitude double precision;
 ALTER TABLE ms_user ADD COLUMN IF NOT EXISTS last_longitude double precision;
 ALTER TABLE ms_user ADD COLUMN IF NOT EXISTS last_location_updated_at timestamp;

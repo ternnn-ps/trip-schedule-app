@@ -308,6 +308,7 @@ public class TripServiceImpl implements TripService {
         plan.setPlace(request.getPlace());
         plan.setLatitude(request.getLatitude());
         plan.setLongitude(request.getLongitude());
+        plan.setGoogleMapUrl(request.getGoogleMapUrl());
     }
 
     private TripResponse mapToResponse(MsTrip entity) {
@@ -336,6 +337,7 @@ public class TripServiceImpl implements TripService {
         response.setPlace(entity.getPlace());
         response.setLatitude(entity.getLatitude());
         response.setLongitude(entity.getLongitude());
+        response.setGoogleMapUrl(entity.getGoogleMapUrl());
         return response;
     }
 

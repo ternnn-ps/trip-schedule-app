@@ -12,4 +12,5 @@ public class TripPlanResponse {
     private String place;
     private String latitude;
     private String longitude;
+    private String googleMapUrl;
 }
