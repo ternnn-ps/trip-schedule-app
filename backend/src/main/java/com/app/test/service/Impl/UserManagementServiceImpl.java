@@ -1,6 +1,7 @@
 package com.app.test.service.Impl;
 
 import com.app.test.beans.dto.request.UserRequest;
+import com.app.test.beans.dto.request.UserLocationRequest;
 import com.app.test.beans.dto.response.PageResponse;
 import com.app.test.beans.dto.response.UserResponse;
 import com.app.test.beans.dto.response.base.ResponseModelDto;
@@ -187,6 +188,59 @@ public class UserManagementServiceImpl implements UserManagementService {
     }
 
     @Override
+    public ResponseModelDto<UserResponse> updateLocation(UserLocationRequest request) {
+        try {
+            if (request == null || request.getUserId() == null) {
+                return new ResponseModelDto<>(
+                        "Failed",
+                        "User ID is required",
+                        null,
+                        false
+                );
+            }
+
+            if (!isValidCoordinate(request.getLatitude(), -90, 90)
+                    || !isValidCoordinate(request.getLongitude(), -180, 180)) {
+                return new ResponseModelDto<>(
+                        "Failed",
+                        "Valid latitude and longitude are required",
+                        null,
+                        false
+                );
+            }
+
+            MsUser entity = msUserRepository.findById(request.getUserId())
+                    .orElse(null);
+
+            if (entity == null || entity.getRecordStatus() != 'A') {
+                return new ResponseModelDto<>(
+                        "Failed",
+                        "Record not found",
+                        null,
+                        false
+                );
+            }
+
+            entity.setLastLatitude(request.getLatitude());
+            entity.setLastLongitude(request.getLongitude());
+            entity.setLastLocationUpdatedAt(new Date());
+            entity.setUpdatedBy("Location");
+            entity.setUpdatedDate(new Date());
+
+            entity = msUserRepository.save(entity);
+
+            return new ResponseModelDto<>("Success", mapToResponse(entity), true);
+        } catch (Exception e) {
+            return new ResponseModelDto<>(
+                    "Error",
+                    e.getMessage(),
+                    null,
+                    false
+            );
+        }
+    }
+
+    @Override
     public ResponseModelDto<UserResponse> delete(UserRequest request) {
 
         try {
@@ -297,6 +351,9 @@ public class UserManagementServiceImpl implements UserManagementService {
         res.setEmail(entity.getEmail());
         res.setPhone(entity.getPhone());
         res.setWebsite(entity.getWebsite());
+        res.setLastLatitude(entity.getLastLatitude());
+        res.setLastLongitude(entity.getLastLongitude());
+        res.setLastLocationUpdatedAt(entity.getLastLocationUpdatedAt());
         return res;
     }
 
@@ -306,5 +363,9 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     private boolean hasText(String value) {
         return value != null && !value.trim().isEmpty();
+    }
+
+    private boolean isValidCoordinate(Double value, int min, int max) {
+        return value != null && Double.isFinite(value) && value >= min && value <= max;
     }
 }

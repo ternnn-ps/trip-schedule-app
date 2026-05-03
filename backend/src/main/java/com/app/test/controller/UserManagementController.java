@@ -1,6 +1,7 @@
 package com.app.test.controller;
 
 import com.app.test.beans.dto.request.UserRequest;
+import com.app.test.beans.dto.request.UserLocationRequest;
 import com.app.test.beans.dto.response.UserResponse;
 import com.app.test.beans.dto.response.base.ResponseModelDto;
 import com.app.test.service.UserManagementService;
@@ -56,6 +57,11 @@ public class UserManagementController {
     @PutMapping("/update")
     public ResponseEntity<Object> update(@RequestBody UserRequest request) {
         return ResponseEntity.ok(userService.update(request));
+    }
+
+    @PostMapping("/location")
+    public ResponseEntity<Object> updateLocation(@RequestBody UserLocationRequest request) {
+        return ResponseEntity.ok(userService.updateLocation(request));
     }
 
     @PostMapping("/delete")

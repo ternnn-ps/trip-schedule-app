@@ -20,6 +20,9 @@ public class UserRequest {
     private String website;
     @ToString.Exclude
     private String password;
+    private Double lastLatitude;
+    private Double lastLongitude;
+    private Date lastLocationUpdatedAt;
 
     private String createdBy;
     private Date createdDate;

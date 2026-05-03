@@ -30,6 +30,23 @@ type PlaceSearchResult = {
 };
 
 const defaultCenter: [number, number] = [13.7563, 100.5018];
+const countryCenters: Record<string, [number, number]> = {
+  AU: [-25.2744, 133.7751],
+  CN: [35.8617, 104.1954],
+  DE: [51.1657, 10.4515],
+  FR: [46.2276, 2.2137],
+  GB: [55.3781, -3.4360],
+  ID: [-0.7893, 113.9213],
+  IN: [20.5937, 78.9629],
+  JP: [36.2048, 138.2529],
+  KR: [35.9078, 127.7669],
+  MY: [4.2105, 101.9758],
+  PH: [12.8797, 121.7740],
+  SG: [1.3521, 103.8198],
+  TH: [15.8700, 100.9925],
+  US: [39.8283, -98.5795],
+  VN: [14.0583, 108.2772],
+};
 
 function parseCoordinates(latitude: string, longitude: string): [number, number] | null {
   const lat = Number(latitude);
@@ -40,6 +57,24 @@ function parseCoordinates(latitude: string, longitude: string): [number, number]
   }
 
   return [lat, lng];
+}
+
+function getLocaleCountryCenter() {
+  try {
+    const locale = new Intl.Locale(navigator.language);
+    const region = locale.region?.toUpperCase();
+
+    return region ? countryCenters[region] ?? defaultCenter : defaultCenter;
+  } catch {
+    return defaultCenter;
+  }
+}
+
+function formatCoordinates([latitude, longitude]: [number, number]) {
+  return {
+    latitude: latitude.toFixed(6),
+    longitude: longitude.toFixed(6),
+  };
 }
 
 export default function LocationPicker({
@@ -57,6 +92,7 @@ export default function LocationPicker({
   const leafletRef = useRef<LeafletModule | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
+  const autoPinnedRef = useRef(false);
   const onChangeRef = useRef(onChange);
   const onPlaceSelectRef = useRef(onPlaceSelect);
   const initialCoordinatesRef = useRef(parseCoordinates(latitude, longitude));
@@ -138,6 +174,37 @@ export default function LocationPicker({
       leafletRef.current = null;
     };
   }, [readOnly]);
+
+  useEffect(() => {
+    if (readOnly || autoPinnedRef.current || parseCoordinates(latitude, longitude)) {
+      return;
+    }
+
+    autoPinnedRef.current = true;
+
+    function pinCoordinates(coordinates: [number, number]) {
+      onChangeRef.current?.(formatCoordinates(coordinates));
+    }
+
+    if (!navigator.geolocation) {
+      pinCoordinates(getLocaleCountryCenter());
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        pinCoordinates([position.coords.latitude, position.coords.longitude]);
+      },
+      () => {
+        pinCoordinates(getLocaleCountryCenter());
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5 * 60 * 1000,
+        timeout: 6000,
+      },
+    );
+  }, [latitude, longitude, readOnly]);
 
   useEffect(() => {
     const leaflet = leafletRef.current;

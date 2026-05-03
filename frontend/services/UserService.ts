@@ -55,6 +55,16 @@ export class UserService {
       .then((res) => res.data);
   }
 
+  async updateLocation(userId: number, latitude: number, longitude: number) {
+    return axios
+      .post(`${BASE_URL}/user/location`, {
+        userId,
+        latitude,
+        longitude,
+      }, { timeout: API_TIMEOUT_MS })
+      .then((res) => res.data);
+  }
+
   private generatePagingStr(size?: number, page?: number, sort?: SortField[]): string {
     let paging = "?";
 

@@ -13,6 +13,9 @@ public class UserDto {
     private String email;
     private String phone;
     private String website;
+    private Double lastLatitude;
+    private Double lastLongitude;
+    private Date lastLocationUpdatedAt;
 
     private String createdBy;
     private Date createdDate;

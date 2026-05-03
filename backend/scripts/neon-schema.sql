@@ -9,6 +9,9 @@ CREATE TABLE IF NOT EXISTS ms_user (
     phone varchar(255),
     website varchar(255),
     password_hash varchar(100),
+    last_latitude double precision,
+    last_longitude double precision,
+    last_location_updated_at timestamp,
     created_by varchar(255),
     created_date timestamp,
     updated_by varchar(255),
@@ -96,3 +99,7 @@ ALTER TABLE ms_user ALTER COLUMN record_status SET DEFAULT 'A';
 ALTER TABLE ms_customer ALTER COLUMN record_status SET DEFAULT 'A';
 ALTER TABLE ms_trip ALTER COLUMN record_status SET DEFAULT 'A';
 ALTER TABLE ms_trip_plan ALTER COLUMN record_status SET DEFAULT 'A';
+
+ALTER TABLE ms_user ADD COLUMN IF NOT EXISTS last_latitude double precision;
+ALTER TABLE ms_user ADD COLUMN IF NOT EXISTS last_longitude double precision;
+ALTER TABLE ms_user ADD COLUMN IF NOT EXISTS last_location_updated_at timestamp;

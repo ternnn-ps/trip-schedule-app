@@ -5,6 +5,9 @@ export interface User {
   email: string;
   phone: string;
   website: string;
+  lastLatitude?: number;
+  lastLongitude?: number;
+  lastLocationUpdatedAt?: string;
 }
 
 export interface UserCriteria {

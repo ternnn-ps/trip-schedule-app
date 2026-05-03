@@ -13,6 +13,7 @@ import {
   updatePlanInTrip,
   updateTrip,
 } from "@/services/tripStore";
+import { getAuthUser } from "@/services/authStore";
 import { UserService } from "@/services/UserService";
 import LocationPicker from "@/components/LocationPicker";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
@@ -77,6 +78,11 @@ type ConfirmDialogState =
   | { type: "plan"; plan: TripPlanItem }
   | { type: "user"; userName: string }
   | null;
+
+type UserLocationDialogState = {
+  name: string;
+  user: User | null;
+} | null;
 
 const monthIndexes: Record<string, number> = {
   jan: 0,
@@ -195,6 +201,24 @@ function getUserKey(user: User) {
   return String(user.userId ?? user.userName ?? user.email ?? getUserDisplayName(user));
 }
 
+function userHasLocation(user?: User | null) {
+  return Number.isFinite(user?.lastLatitude) && Number.isFinite(user?.lastLongitude);
+}
+
+function formatLocationTime(value?: string) {
+  if (!value) {
+    return "Unknown time";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown time";
+  }
+
+  return date.toLocaleString();
+}
+
 export default function TripDetailClient({ tripId }: { tripId: string }) {
   const router = useRouter();
   const trips = useSyncExternalStore(subscribeTrips, getTrips, getTripsServerSnapshot);
@@ -214,6 +238,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersError, setUsersError] = useState("");
+  const [userLocationDialog, setUserLocationDialog] = useState<UserLocationDialogState>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -260,6 +285,59 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    const authUser = getAuthUser();
+
+    if (!authUser?.userId || !navigator.geolocation) {
+      return;
+    }
+
+    const throttleKey = `travel-user-location-updated-${authUser.userId}`;
+    const lastUpdatedAt = Number(window.localStorage.getItem(throttleKey) ?? 0);
+    const now = Date.now();
+
+    if (now - lastUpdatedAt < 5 * 60 * 1000) {
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const latitude = Number(position.coords.latitude.toFixed(6));
+        const longitude = Number(position.coords.longitude.toFixed(6));
+
+        window.localStorage.setItem(throttleKey, String(now));
+
+        void userService.updateLocation(authUser.userId!, latitude, longitude)
+          .then((response) => {
+            if (!response?.result || !response.body) {
+              return;
+            }
+
+            setAvailableUsers((users) => {
+              const nextUser = response.body as User;
+              const nextKey = getUserKey(nextUser);
+              const hasExistingUser = users.some((user) => getUserKey(user) === nextKey);
+
+              if (!hasExistingUser) {
+                return users;
+              }
+
+              return users.map((user) => (getUserKey(user) === nextKey ? nextUser : user));
+            });
+          })
+          .catch((locationError) => {
+            console.error("Failed to update user location:", locationError);
+          });
+      },
+      () => undefined,
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5 * 60 * 1000,
+        timeout: 6000,
+      },
+    );
   }, []);
 
   function openAddPlanDialog() {
@@ -349,6 +427,25 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
 
   function handleRemoveUser(userName: string) {
     setConfirmDialog({ type: "user", userName });
+  }
+
+  function findTripUser(userName: string) {
+    const normalizedName = userName.trim().toLowerCase();
+
+    return availableUsers.find((user) => {
+      const displayName = getUserDisplayName(user).trim().toLowerCase();
+      const userLogin = user.userName?.trim().toLowerCase();
+      const email = user.email?.trim().toLowerCase();
+
+      return displayName === normalizedName || userLogin === normalizedName || email === normalizedName;
+    }) ?? null;
+  }
+
+  function openUserLocationDialog(userName: string) {
+    setUserLocationDialog({
+      name: userName,
+      user: findTripUser(userName),
+    });
   }
 
   function openEditTripDialog() {
@@ -461,7 +558,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
   return (
     <>
     <Stack spacing={3}>
-      <Box className="page-heading">
+      <Box className="page-heading trip-detail-heading">
         <Box>
           <Button component={Link} href="/" startIcon={<ArrowBackIcon />} sx={{ mb: 1, px: 0 }}>
             Overview
@@ -474,8 +571,8 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
           </Typography>
         </Box>
 
-        <Stack spacing={1} sx={{ alignItems: { xs: "flex-start", md: "flex-end" } }}>
-          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", justifyContent: { xs: "flex-start", md: "flex-end" } }}>
+        <Stack spacing={1} className="trip-detail-actions">
+          <Stack direction="row" spacing={1} className="trip-detail-chip-row">
             <Chip icon={<LocationOnIcon />} label={trip.destination} />
             <Chip icon={<AccessTimeIcon />} label={`${trip.plans.length} plans`} />
           </Stack>
@@ -511,7 +608,8 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                     <Chip
                       key={user}
                       label={user}
-                      title="Can view and edit"
+                      title="Tap to see last location"
+                      onClick={() => openUserLocationDialog(user)}
                       onDelete={() => handleRemoveUser(user)}
                       deleteIcon={<CloseIcon />}
                     />
@@ -648,7 +746,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                                 </Box>
                               ) : null}
                             </Box>
-                            <Stack spacing={1} sx={{ flexShrink: 0, alignItems: "flex-end" }}>
+                            <Stack direction="row" spacing={1} sx={{ flexShrink: 0, alignItems: "center" }}>
                               <Chip icon={<AccessTimeIcon />} label={plan.time} size="small" />
                               <IconButton
                                 aria-label={`Plan actions for ${plan.place}`}
@@ -852,6 +950,54 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
           </Button>
         </DialogActions>
 	      </Box>
+	    </Dialog>
+
+	    <Dialog
+	      open={Boolean(userLocationDialog)}
+	      onClose={() => setUserLocationDialog(null)}
+	      fullWidth
+	      maxWidth="sm"
+	    >
+	      <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontWeight: 900 }}>
+	        Last Location
+	        <IconButton onClick={() => setUserLocationDialog(null)} aria-label="Close dialog">
+	          <CloseIcon />
+	        </IconButton>
+	      </DialogTitle>
+	      <DialogContent>
+	        <Stack spacing={2}>
+	          <Box>
+	            <Typography sx={{ fontWeight: 900 }}>
+	              {userLocationDialog?.name}
+	            </Typography>
+	            <Typography sx={{ color: "var(--muted)", fontSize: "0.9rem" }}>
+	              {userHasLocation(userLocationDialog?.user)
+	                ? `Updated ${formatLocationTime(userLocationDialog?.user?.lastLocationUpdatedAt)}`
+	                : "No saved location yet. The user needs to open the trip page and allow location access once."}
+	            </Typography>
+	          </Box>
+
+	          {userHasLocation(userLocationDialog?.user) ? (
+	            <>
+	              <LocationPicker
+	                latitude={String(userLocationDialog?.user?.lastLatitude ?? "")}
+	                longitude={String(userLocationDialog?.user?.lastLongitude ?? "")}
+	                readOnly
+	              />
+	              <Button
+	                component="a"
+	                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${userLocationDialog?.user?.lastLatitude},${userLocationDialog?.user?.lastLongitude}`)}`}
+	                target="_blank"
+	                rel="noreferrer"
+	                startIcon={<MapIcon />}
+	                variant="outlined"
+	              >
+	                Open map
+	              </Button>
+	            </>
+	          ) : null}
+	        </Stack>
+	      </DialogContent>
 	    </Dialog>
 
 	    <Dialog

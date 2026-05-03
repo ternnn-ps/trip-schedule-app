@@ -393,6 +393,26 @@ html[data-theme="dark"] .sidebar-shell {
   background: rgba(37, 99, 235, 0.08) !important;
 }
 
+.trip-detail-heading {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.trip-detail-heading > :first-child {
+  min-width: 0;
+}
+
+.trip-detail-actions {
+  align-items: flex-end;
+  flex: 0 0 auto;
+}
+
+.trip-detail-chip-row {
+  display: none !important;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .trip-note {
   display: -webkit-box;
   min-height: 48px;
@@ -565,6 +585,10 @@ html[data-theme="dark"] .map-preview {
   .section-heading {
     flex-direction: row;
     align-items: center;
+  }
+
+  .trip-detail-chip-row {
+    display: flex !important;
   }
 
   .trip-grid {

@@ -22,6 +22,9 @@ public class MsUser {
     private String website;
     @Column(length = 100)
     private String passwordHash;
+    private Double lastLatitude;
+    private Double lastLongitude;
+    private Date lastLocationUpdatedAt;
 
     private String createdBy;
     private Date createdDate;

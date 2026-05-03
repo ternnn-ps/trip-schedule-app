@@ -5,7 +5,10 @@ import { User } from "@/types/user";
 const AUTH_STORAGE_KEY = "travel-schedule-current-user";
 const AUTH_UPDATED_EVENT = "travel-auth-updated";
 
-export type AuthUser = Pick<User, "userId" | "userName" | "userFullName" | "email">;
+export type AuthUser = Pick<
+  User,
+  "userId" | "userName" | "userFullName" | "email" | "lastLatitude" | "lastLongitude" | "lastLocationUpdatedAt"
+>;
 
 let userCache: AuthUser | null = null;
 let rawCache: string | null = null;
@@ -20,6 +23,9 @@ function normalizeUser(user: User): AuthUser {
     userName: user.userName ?? "",
     userFullName: user.userFullName ?? "",
     email: user.email ?? "",
+    lastLatitude: user.lastLatitude,
+    lastLongitude: user.lastLongitude,
+    lastLocationUpdatedAt: user.lastLocationUpdatedAt,
   };
 }
 
