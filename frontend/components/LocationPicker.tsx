@@ -2,14 +2,16 @@
 
 import {
   Box,
-  Button,
   CircularProgress,
+  IconButton,
   List,
   ListItemButton,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 import type { Map as LeafletMap, Marker } from "leaflet";
 import { KeyboardEvent, useEffect, useRef, useState } from "react";
 
@@ -18,6 +20,8 @@ type LeafletModule = typeof import("leaflet");
 type LocationPickerProps = {
   latitude: string;
   longitude: string;
+  defaultLatitude?: string;
+  defaultLongitude?: string;
   markers?: LocationMarker[];
   onChange?: (coordinates: { latitude: string; longitude: string }) => void;
   onPlaceSelect?: (placeName: string) => void;
@@ -95,6 +99,8 @@ function escapeHtml(value: string) {
 export default function LocationPicker({
   latitude,
   longitude,
+  defaultLatitude = "",
+  defaultLongitude = "",
   markers = [],
   onChange,
   onPlaceSelect,
@@ -113,7 +119,8 @@ export default function LocationPicker({
   const onChangeRef = useRef(onChange);
   const onPlaceSelectRef = useRef(onPlaceSelect);
   const initialCoordinatesRef = useRef(parseCoordinates(latitude, longitude));
-  const initialCenterRef = useRef(initialCoordinatesRef.current ?? defaultCenter);
+  const defaultCoordinatesRef = useRef(parseCoordinates(defaultLatitude, defaultLongitude));
+  const initialCenterRef = useRef(initialCoordinatesRef.current ?? defaultCoordinatesRef.current ?? defaultCenter);
   const markerSignature = markers
     .map((marker) => `${marker.label}:${marker.latitude},${marker.longitude}`)
     .join("|");
@@ -233,6 +240,13 @@ export default function LocationPicker({
       onChangeRef.current?.(formatCoordinates(coordinates));
     }
 
+    const defaultCoordinates = parseCoordinates(defaultLatitude, defaultLongitude);
+
+    if (defaultCoordinates) {
+      pinCoordinates(defaultCoordinates);
+      return;
+    }
+
     if (!navigator.geolocation) {
       pinCoordinates(getLocaleCountryCenter());
       return;
@@ -251,7 +265,7 @@ export default function LocationPicker({
         timeout: 6000,
       },
     );
-  }, [latitude, longitude, readOnly]);
+  }, [defaultLatitude, defaultLongitude, latitude, longitude, readOnly]);
 
   useEffect(() => {
     const leaflet = leafletRef.current;
@@ -383,7 +397,7 @@ export default function LocationPicker({
   return (
     <Stack spacing={1.25}>
       <Box className="map-search-panel">
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
           <TextField
             label="Search place"
             value={query}
@@ -393,15 +407,25 @@ export default function LocationPicker({
             size="small"
             fullWidth
           />
-          <Button
-            type="button"
-            variant="outlined"
-            onClick={handleSearchPlace}
-            disabled={isSearching}
-            sx={{ minWidth: { sm: 110 } }}
-          >
-            {isSearching ? <CircularProgress size={18} /> : "Search"}
-          </Button>
+          <Tooltip title="Search place">
+            <span>
+              <IconButton
+                type="button"
+                color="primary"
+                onClick={handleSearchPlace}
+                disabled={isSearching}
+                aria-label="Search place"
+                sx={{
+                  border: "1px solid var(--border)",
+                  borderRadius: 2,
+                  height: 40,
+                  width: 40,
+                }}
+              >
+                {isSearching ? <CircularProgress size={18} /> : <SearchIcon fontSize="small" />}
+              </IconButton>
+            </span>
+          </Tooltip>
         </Stack>
 
         {searchError ? (

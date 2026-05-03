@@ -91,6 +91,11 @@ type UserLocationDialogState = {
   user: User | null;
 } | null;
 
+type LocationCandidate = {
+  lastLatitude?: number;
+  lastLongitude?: number;
+};
+
 function parsePlanDayNumber(day: string) {
   const match = day.match(/\d+/);
   const dayNumber = match ? Number(match[0]) : Number.NaN;
@@ -110,8 +115,19 @@ function getUserKey(user: User) {
   return String(user.userId ?? user.userName ?? user.email ?? getUserDisplayName(user));
 }
 
-function userHasLocation(user?: User | null) {
+function userHasLocation(user?: LocationCandidate | null) {
   return Number.isFinite(user?.lastLatitude) && Number.isFinite(user?.lastLongitude);
+}
+
+function getSavedCoordinates(user?: LocationCandidate | null) {
+  if (!userHasLocation(user) || !user) {
+    return null;
+  }
+
+  return {
+    latitude: String(user.lastLatitude),
+    longitude: String(user.lastLongitude),
+  };
 }
 
 function formatLocationTime(value?: string) {
@@ -504,6 +520,15 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       latitude: String(item.user.lastLatitude),
       longitude: String(item.user.lastLongitude),
     }));
+  const currentDatabaseUser = authUser
+    ? availableUsers.find(
+        (user) =>
+          user.userId === authUser.userId ||
+          user.userName === authUser.userName ||
+          user.email === authUser.email,
+      )
+    : null;
+  const defaultPlanCoordinates = getSavedCoordinates(currentDatabaseUser) ?? getSavedCoordinates(authUser);
   const planMenuOpen = Boolean(planMenu);
   const tripMenuOpen = Boolean(tripMenuAnchorEl);
   const confirmDialogTitle =
@@ -972,6 +997,8 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
               <LocationPicker
                 latitude={form.latitude}
                 longitude={form.longitude}
+                defaultLatitude={defaultPlanCoordinates?.latitude}
+                defaultLongitude={defaultPlanCoordinates?.longitude}
                 onChange={(coordinates) => setForm((currentForm) => ({ ...currentForm, ...coordinates }))}
                 onPlaceSelect={(placeName) =>
                   setForm((currentForm) => ({
