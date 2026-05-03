@@ -415,13 +415,22 @@ html[data-theme="dark"] .sidebar-shell {
 
 .trip-user-panel-actions {
   display: grid !important;
+  grid-template-columns: repeat(2, 42px);
   align-items: stretch;
   gap: 10px;
-  min-width: 180px;
+  justify-content: flex-start;
 }
 
-.trip-user-panel-actions .MuiButton-root {
-  justify-content: flex-start;
+.trip-user-action-button {
+  width: 42px;
+  min-width: 42px !important;
+  height: 42px;
+  padding: 0 !important;
+  border-radius: 50% !important;
+}
+
+.trip-user-action-label {
+  display: none;
 }
 
 .trip-note {
@@ -598,10 +607,19 @@ html[data-theme="dark"] .map-preview {
   .trip-user-panel-actions {
     align-items: flex-end;
     grid-template-columns: repeat(2, minmax(112px, auto));
+    justify-content: flex-end;
   }
 
-  .trip-user-panel-actions .MuiButton-root {
-    justify-content: center;
+  .trip-user-action-button {
+    width: auto;
+    min-width: 112px !important;
+    border-radius: 8px !important;
+    gap: 8px;
+    padding: 6px 14px !important;
+  }
+
+  .trip-user-action-label {
+    display: inline;
   }
 }
 

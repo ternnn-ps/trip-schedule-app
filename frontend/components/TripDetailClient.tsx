@@ -637,20 +637,28 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
               <Button
                 type="button"
                 variant="outlined"
-                startIcon={usersLoading ? <CircularProgress size={16} /> : <PersonAddIcon />}
+                className="trip-user-action-button"
+                aria-label="Add user"
                 onClick={() => setAddUserDialogOpen(true)}
                 disabled={usersLoading}
               >
-                Add User
+                {usersLoading ? <CircularProgress size={18} /> : <PersonAddIcon />}
+                <Box component="span" className="trip-user-action-label">
+                  Add User
+                </Box>
               </Button>
               <Button
                 type="button"
                 variant="outlined"
-                startIcon={<MapIcon />}
+                className="trip-user-action-button"
+                aria-label="Show user locations map"
                 onClick={() => setUsersMapOpen(true)}
                 disabled={trip.users.length === 0}
               >
-                Map
+                <MapIcon />
+                <Box component="span" className="trip-user-action-label">
+                  Map
+                </Box>
               </Button>
             </Stack>
           </Stack>
