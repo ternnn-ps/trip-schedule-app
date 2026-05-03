@@ -18,6 +18,7 @@ import {
   getAuthUserServerSnapshot,
   subscribeAuth,
 } from "@/services/authStore";
+import { formatDateRange, getTripDurationDays, parseTripDateRange } from "@/services/dateRange";
 import { canEditTrip } from "@/services/tripPermissions";
 import { UserService } from "@/services/UserService";
 import LocationPicker from "@/components/LocationPicker";
@@ -74,7 +75,8 @@ const emptyPlanForm = {
 const emptyTripEditForm = {
   name: "",
   destination: "",
-  dateRange: "",
+  startDate: "",
+  endDate: "",
   notes: "",
 };
 
@@ -89,33 +91,6 @@ type UserLocationDialogState = {
   user: User | null;
 } | null;
 
-const monthIndexes: Record<string, number> = {
-  jan: 0,
-  january: 0,
-  feb: 1,
-  february: 1,
-  mar: 2,
-  march: 2,
-  apr: 3,
-  april: 3,
-  may: 4,
-  jun: 5,
-  june: 5,
-  jul: 6,
-  july: 6,
-  aug: 7,
-  august: 7,
-  sep: 8,
-  sept: 8,
-  september: 8,
-  oct: 9,
-  october: 9,
-  nov: 10,
-  november: 10,
-  dec: 11,
-  december: 11,
-};
-
 function parsePlanDayNumber(day: string) {
   const match = day.match(/\d+/);
   const dayNumber = match ? Number(match[0]) : Number.NaN;
@@ -125,77 +100,6 @@ function parsePlanDayNumber(day: string) {
   }
 
   return dayNumber;
-}
-
-function parseDateSegment(segment: string, fallbackYear?: number) {
-  const trimmedSegment = segment.trim();
-  const isoMatch = trimmedSegment.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-
-  if (isoMatch) {
-    return {
-      date: new Date(Date.UTC(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]))),
-      hasYear: true,
-    };
-  }
-
-  const labelMatch = trimmedSegment.match(/^(\d{1,2})\s+([A-Za-z]+)\s*(\d{4})?$/);
-
-  if (labelMatch) {
-    const month = monthIndexes[labelMatch[2].toLowerCase()];
-    const year = labelMatch[3] ? Number(labelMatch[3]) : fallbackYear;
-
-    if (month === undefined || year === undefined) {
-      return null;
-    }
-
-    return {
-      date: new Date(Date.UTC(year, month, Number(labelMatch[1]))),
-      hasYear: Boolean(labelMatch[3]),
-    };
-  }
-
-  const fallbackDate = new Date(trimmedSegment);
-
-  if (Number.isNaN(fallbackDate.getTime())) {
-    return null;
-  }
-
-  return {
-    date: fallbackDate,
-    hasYear: /\d{4}/.test(trimmedSegment),
-  };
-}
-
-function getTripDurationDays(dateRange: string) {
-  const [startSegment, endSegment] = dateRange.split(/\s+-\s+/);
-
-  if (!startSegment || !endSegment) {
-    return null;
-  }
-
-  const end = parseDateSegment(endSegment);
-
-  if (!end) {
-    return null;
-  }
-
-  let start = parseDateSegment(startSegment, end.date.getUTCFullYear());
-
-  if (!start) {
-    return null;
-  }
-
-  if (!start.hasYear && start.date.getTime() > end.date.getTime()) {
-    start = {
-      date: new Date(Date.UTC(end.date.getUTCFullYear() - 1, start.date.getUTCMonth(), start.date.getUTCDate())),
-      hasYear: false,
-    };
-  }
-
-  const millisecondsPerDay = 24 * 60 * 60 * 1000;
-  const durationDays = Math.round((end.date.getTime() - start.date.getTime()) / millisecondsPerDay) + 1;
-
-  return durationDays > 0 ? durationDays : null;
 }
 
 function getUserDisplayName(user: User) {
@@ -483,10 +387,12 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       return;
     }
 
+    const parsedDateRange = parseTripDateRange(trip.dateRange);
     setTripEditForm({
       name: trip.name,
       destination: trip.destination,
-      dateRange: trip.dateRange,
+      startDate: parsedDateRange?.startDate ?? "",
+      endDate: parsedDateRange?.endDate ?? "",
       notes: trip.notes,
     });
     setTripEditOpen(true);
@@ -500,7 +406,8 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       !canEditTrip(trip, authUser) ||
       !tripEditForm.name.trim() ||
       !tripEditForm.destination.trim() ||
-      !tripEditForm.dateRange.trim()
+      !tripEditForm.startDate ||
+      !tripEditForm.endDate
     ) {
       return;
     }
@@ -508,7 +415,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
     updateTrip(trip.id, {
       name: tripEditForm.name.trim(),
       destination: tripEditForm.destination.trim(),
-      dateRange: tripEditForm.dateRange.trim(),
+      dateRange: formatDateRange(tripEditForm.startDate, tripEditForm.endDate),
       notes: tripEditForm.notes.trim(),
     });
     setTripEditOpen(false);
@@ -1110,7 +1017,24 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
           <Stack spacing={2}>
             <TextField label="Trip name" value={tripEditForm.name} onChange={(event) => setTripEditForm({ ...tripEditForm, name: event.target.value })} fullWidth />
             <TextField label="Destination" value={tripEditForm.destination} onChange={(event) => setTripEditForm({ ...tripEditForm, destination: event.target.value })} fullWidth />
-            <TextField label="Date range" value={tripEditForm.dateRange} onChange={(event) => setTripEditForm({ ...tripEditForm, dateRange: event.target.value })} fullWidth />
+            <Box className="plan-form-grid">
+              <TextField
+                label="Start date"
+                type="date"
+                value={tripEditForm.startDate}
+                onChange={(event) => setTripEditForm({ ...tripEditForm, startDate: event.target.value })}
+                slotProps={{ inputLabel: { shrink: true } }}
+                fullWidth
+              />
+              <TextField
+                label="End date"
+                type="date"
+                value={tripEditForm.endDate}
+                onChange={(event) => setTripEditForm({ ...tripEditForm, endDate: event.target.value })}
+                slotProps={{ inputLabel: { shrink: true } }}
+                fullWidth
+              />
+            </Box>
             <TextField label="Trip note" value={tripEditForm.notes} onChange={(event) => setTripEditForm({ ...tripEditForm, notes: event.target.value })} multiline minRows={3} fullWidth />
           </Stack>
         </DialogContent>

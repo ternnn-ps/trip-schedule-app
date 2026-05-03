@@ -11,6 +11,7 @@ import {
   updateTrip,
 } from "@/services/tripStore";
 import { UserService } from "@/services/UserService";
+import { formatDateRange, parseTripDateRange } from "@/services/dateRange";
 import {
   getAuthDisplayName,
   getAuthUser,
@@ -72,7 +73,8 @@ type TripForm = {
 type EditTripForm = {
   name: string;
   destination: string;
-  dateRange: string;
+  startDate: string;
+  endDate: string;
   allUsers: boolean;
   users: string[];
   notes: string;
@@ -91,31 +93,12 @@ const emptyTripForm: TripForm = {
 const emptyEditTripForm: EditTripForm = {
   name: "",
   destination: "",
-  dateRange: "",
+  startDate: "",
+  endDate: "",
   allUsers: false,
   users: [],
   notes: "",
 };
-
-function formatDisplayDate(value: string) {
-  if (!value) {
-    return "";
-  }
-
-  return new Intl.DateTimeFormat("en", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(`${value}T00:00:00`));
-}
-
-function formatDateRange(startDate: string, endDate: string) {
-  if (startDate === endDate) {
-    return formatDisplayDate(startDate);
-  }
-
-  return `${formatDisplayDate(startDate)} - ${formatDisplayDate(endDate)}`;
-}
 
 function getUserDisplayName(user: User) {
   return user.userFullName?.trim() || user.userName?.trim() || user.email?.trim() || "Unnamed user";
@@ -247,10 +230,12 @@ export default function TripOverview() {
 
     setTripMenu(null);
     setEditingTrip(trip);
+    const parsedDateRange = parseTripDateRange(trip.dateRange);
     setEditForm({
       name: trip.name,
       destination: trip.destination,
-      dateRange: trip.dateRange,
+      startDate: parsedDateRange?.startDate ?? "",
+      endDate: parsedDateRange?.endDate ?? "",
       allUsers: Boolean(trip.allUsers),
       users: trip.users,
       notes: trip.notes,
@@ -261,7 +246,7 @@ export default function TripOverview() {
   function handleUpdateTrip(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!editingTrip || !editForm.name.trim() || !editForm.destination.trim() || !editForm.dateRange.trim()) {
+    if (!editingTrip || !editForm.name.trim() || !editForm.destination.trim() || !editForm.startDate || !editForm.endDate) {
       setEditError("Trip name, destination, and date range are required.");
       return;
     }
@@ -281,7 +266,7 @@ export default function TripOverview() {
     updateTrip(editingTrip.id, {
       name: editForm.name.trim(),
       destination: editForm.destination.trim(),
-      dateRange: editForm.dateRange.trim(),
+      dateRange: formatDateRange(editForm.startDate, editForm.endDate),
       allUsers: editForm.allUsers,
       users: selectedUsers,
       notes: editForm.notes.trim(),
@@ -688,7 +673,24 @@ export default function TripOverview() {
               {editError ? <Alert severity="warning">{editError}</Alert> : null}
               <TextField label="Trip name" value={editForm.name} onChange={(event) => setEditForm({ ...editForm, name: event.target.value })} fullWidth />
               <TextField label="Destination" value={editForm.destination} onChange={(event) => setEditForm({ ...editForm, destination: event.target.value })} fullWidth />
-              <TextField label="Date range" value={editForm.dateRange} onChange={(event) => setEditForm({ ...editForm, dateRange: event.target.value })} fullWidth />
+              <Box className="plan-form-grid">
+                <TextField
+                  label="Start date"
+                  type="date"
+                  value={editForm.startDate}
+                  onChange={(event) => setEditForm({ ...editForm, startDate: event.target.value })}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  fullWidth
+                />
+                <TextField
+                  label="End date"
+                  type="date"
+                  value={editForm.endDate}
+                  onChange={(event) => setEditForm({ ...editForm, endDate: event.target.value })}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  fullWidth
+                />
+              </Box>
               <FormControlLabel
                 control={
                   <Checkbox
