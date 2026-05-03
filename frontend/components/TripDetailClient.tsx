@@ -13,7 +13,12 @@ import {
   updatePlanInTrip,
   updateTrip,
 } from "@/services/tripStore";
-import { getAuthUser } from "@/services/authStore";
+import {
+  getAuthUser,
+  getAuthUserServerSnapshot,
+  subscribeAuth,
+} from "@/services/authStore";
+import { canEditTrip } from "@/services/tripPermissions";
 import { UserService } from "@/services/UserService";
 import LocationPicker from "@/components/LocationPicker";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
@@ -222,6 +227,7 @@ function formatLocationTime(value?: string) {
 export default function TripDetailClient({ tripId }: { tripId: string }) {
   const router = useRouter();
   const trips = useSyncExternalStore(subscribeTrips, getTrips, getTripsServerSnapshot);
+  const authUser = useSyncExternalStore(subscribeAuth, getAuthUser, getAuthUserServerSnapshot);
   const trip = trips.find((item) => item.id === tripId) ?? null;
   const [form, setForm] = useState(emptyPlanForm);
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
@@ -290,8 +296,6 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
   }, []);
 
   useEffect(() => {
-    const authUser = getAuthUser();
-
     if (!authUser?.userId || !navigator.geolocation) {
       return;
     }
@@ -340,9 +344,13 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
         timeout: 6000,
       },
     );
-  }, []);
+  }, [authUser]);
 
   function openAddPlanDialog() {
+    if (!trip || !canEditTrip(trip, authUser)) {
+      return;
+    }
+
     setForm(emptyPlanForm);
     setEditingPlanId(null);
     setError("");
@@ -350,6 +358,10 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
   }
 
   function openEditPlanDialog(plan: TripPlanItem) {
+    if (!trip || !canEditTrip(trip, authUser)) {
+      return;
+    }
+
     setPlanMenu(null);
     setForm({
       day: plan.day,
@@ -368,6 +380,11 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
     event.preventDefault();
 
     if (!trip) {
+      return;
+    }
+
+    if (!canEditTrip(trip, authUser)) {
+      setError("You do not have permission to edit this trip.");
       return;
     }
 
@@ -412,6 +429,10 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
   }
 
   function openDeletePlanDialog(plan: TripPlanItem) {
+    if (!trip || !canEditTrip(trip, authUser)) {
+      return;
+    }
+
     setPlanMenu(null);
     setConfirmDialog({ type: "plan", plan });
   }
@@ -419,7 +440,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
   function handleAddUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!trip || !selectedUser) {
+    if (!trip || !selectedUser || !canEditTrip(trip, authUser) || trip.allUsers) {
       return;
     }
 
@@ -429,6 +450,10 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
   }
 
   function handleRemoveUser(userName: string) {
+    if (!trip || !canEditTrip(trip, authUser) || trip.allUsers) {
+      return;
+    }
+
     setConfirmDialog({ type: "user", userName });
   }
 
@@ -454,7 +479,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
   function openEditTripDialog() {
     setTripMenuAnchorEl(null);
 
-    if (!trip) {
+    if (!trip || !canEditTrip(trip, authUser)) {
       return;
     }
 
@@ -470,7 +495,13 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
   function handleUpdateTrip(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!trip || !tripEditForm.name.trim() || !tripEditForm.destination.trim() || !tripEditForm.dateRange.trim()) {
+    if (
+      !trip ||
+      !canEditTrip(trip, authUser) ||
+      !tripEditForm.name.trim() ||
+      !tripEditForm.destination.trim() ||
+      !tripEditForm.dateRange.trim()
+    ) {
       return;
     }
 
@@ -485,11 +516,21 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
 
   function openDeleteTripDialog() {
     setTripMenuAnchorEl(null);
+
+    if (!trip || !canEditTrip(trip, authUser)) {
+      return;
+    }
+
     setConfirmDialog({ type: "trip" });
   }
 
   function handleConfirmDialogAction() {
     if (!trip || !confirmDialog) {
+      return;
+    }
+
+    if (!canEditTrip(trip, authUser)) {
+      setConfirmDialog(null);
       return;
     }
 
@@ -535,13 +576,21 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
     { length: tripDurationDays ?? 14 },
     (_, index) => `Day ${index + 1}`,
   );
+  const canEditCurrentTrip = canEditTrip(trip, authUser);
   const hasSelectedDayOutsideOptions = Boolean(form.day) && !dayOptions.includes(form.day);
-  const usersAvailableToAdd = availableUsers.filter((user) => !trip.users.includes(getUserDisplayName(user)));
-  const tripUserLocations = trip.users
-    .map((userName) => ({
-      name: userName,
-      user: findTripUser(userName),
-    }))
+  const usersAvailableToAdd = trip.allUsers
+    ? []
+    : availableUsers.filter((user) => !trip.users.includes(getUserDisplayName(user)));
+  const tripUsersForLocation = trip.allUsers
+    ? availableUsers.map((user) => ({
+        name: getUserDisplayName(user),
+        user,
+      }))
+    : trip.users.map((userName) => ({
+        name: userName,
+        user: findTripUser(userName),
+      }));
+  const tripUserLocations = tripUsersForLocation
     .filter((item): item is { name: string; user: User } => userHasLocation(item.user))
     .map((item) => ({
       label: item.name,
@@ -590,13 +639,15 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
             <Chip icon={<LocationOnIcon />} label={trip.destination} />
             <Chip icon={<AccessTimeIcon />} label={`${trip.plans.length} plans`} />
           </Stack>
-          <IconButton
-            aria-label="Trip actions"
-            className="kebab-button"
-            onClick={(event) => setTripMenuAnchorEl(event.currentTarget)}
-          >
-            <MoreVertIcon />
-          </IconButton>
+          {canEditCurrentTrip ? (
+            <IconButton
+              aria-label="Trip actions"
+              className="kebab-button"
+              onClick={(event) => setTripMenuAnchorEl(event.currentTarget)}
+            >
+              <MoreVertIcon />
+            </IconButton>
+          ) : null}
         </Stack>
       </Box>
 
@@ -614,17 +665,21 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                 Trip Users
               </Typography>
               <Typography sx={{ color: "var(--muted)", fontSize: "0.92rem", mt: 0.5 }}>
-                
+                {trip.allUsers
+                  ? "Every database user can view and edit this trip."
+                  : "Selected users can view and edit this trip."}
               </Typography>
               <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: "wrap" }}>
-                {trip.users.length > 0 ? (
+                {trip.allUsers ? (
+                  <Chip label="All users" color="primary" variant="outlined" />
+                ) : trip.users.length > 0 ? (
                   trip.users.map((user) => (
                     <Chip
                       key={user}
                       label={user}
                       title="Tap to see last location"
                       onClick={() => openUserLocationDialog(user)}
-                      onDelete={() => handleRemoveUser(user)}
+                      onDelete={canEditCurrentTrip ? () => handleRemoveUser(user) : undefined}
                       deleteIcon={<CloseIcon />}
                     />
                   ))
@@ -634,26 +689,28 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
               </Stack>
             </Box>
             <Stack className="trip-user-panel-actions">
-              <Button
-                type="button"
-                variant="outlined"
-                className="trip-user-action-button"
-                aria-label="Add user"
-                onClick={() => setAddUserDialogOpen(true)}
-                disabled={usersLoading}
-              >
-                {usersLoading ? <CircularProgress size={18} /> : <PersonAddIcon />}
-                <Box component="span" className="trip-user-action-label">
-                  Add User
-                </Box>
-              </Button>
+              {canEditCurrentTrip && !trip.allUsers ? (
+                <Button
+                  type="button"
+                  variant="outlined"
+                  className="trip-user-action-button"
+                  aria-label="Add user"
+                  onClick={() => setAddUserDialogOpen(true)}
+                  disabled={usersLoading}
+                >
+                  {usersLoading ? <CircularProgress size={18} /> : <PersonAddIcon />}
+                  <Box component="span" className="trip-user-action-label">
+                    Add User
+                  </Box>
+                </Button>
+              ) : null}
               <Button
                 type="button"
                 variant="outlined"
                 className="trip-user-action-button"
                 aria-label="Show user locations map"
                 onClick={() => setUsersMapOpen(true)}
-                disabled={trip.users.length === 0}
+                disabled={!trip.allUsers && trip.users.length === 0}
               >
                 <MapIcon />
                 <Box component="span" className="trip-user-action-label">
@@ -681,15 +738,17 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
               sx={{ alignItems: { xs: "stretch", sm: "center" }, width: { xs: "100%", sm: "auto" } }}
             >
               <Chip label={`${trip.plans.length} stops`} />
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                className="travel-primary-button"
-                onClick={openAddPlanDialog}
-                sx={{ width: { xs: "100%", sm: "auto" } }}
-              >
-                Add Plan
-              </Button>
+              {canEditCurrentTrip ? (
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  className="travel-primary-button"
+                  onClick={openAddPlanDialog}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
+                >
+                  Add Plan
+                </Button>
+              ) : null}
             </Stack>
           </Box>
 
@@ -731,14 +790,16 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                             </Box>
                             <Stack direction="row" spacing={1} sx={{ flexShrink: 0, alignItems: "center" }}>
                               <Chip icon={<AccessTimeIcon />} label={plan.time} size="small" />
-                              <IconButton
-                                aria-label={`Plan actions for ${plan.place}`}
-                                size="small"
-                                className="kebab-button"
-                                onClick={(event) => setPlanMenu({ anchorEl: event.currentTarget, plan })}
-                              >
-                                <MoreVertIcon fontSize="small" />
-                              </IconButton>
+                              {canEditCurrentTrip ? (
+                                <IconButton
+                                  aria-label={`Plan actions for ${plan.place}`}
+                                  size="small"
+                                  className="kebab-button"
+                                  onClick={(event) => setPlanMenu({ anchorEl: event.currentTarget, plan })}
+                                >
+                                  <MoreVertIcon fontSize="small" />
+                                </IconButton>
+                              ) : null}
                             </Stack>
                           </Stack>
                         </Stack>

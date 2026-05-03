@@ -15,6 +15,7 @@ const starterTrips: Trip[] = [
     destination: "Kyoto, Japan",
     dateRange: "14 Apr - 18 Apr 2026",
     notes: "Mix quiet mornings with food stops and easy transit between neighborhoods.",
+    allUsers: false,
     users: ["Mina", "Alex"],
     plans: [
       {
@@ -48,6 +49,7 @@ const starterTrips: Trip[] = [
     destination: "Bangkok, Thailand",
     dateRange: "02 May - 04 May 2026",
     notes: "Keep this one flexible with river travel, one market night, and a slow final morning.",
+    allUsers: false,
     users: ["Pacha"],
     plans: [
       {
@@ -94,6 +96,7 @@ function setCache(trips: Trip[], raw: string) {
 function normalizeTrip(trip: Trip): Trip {
   return {
     ...trip,
+    allUsers: Boolean(trip.allUsers),
     users: Array.isArray(trip.users) ? trip.users : [],
     plans: Array.isArray(trip.plans)
       ? trip.plans.map((plan) => ({

@@ -24,6 +24,8 @@ public class MsTrip {
     @Column(length = 2000)
     private String notes;
 
+    private Boolean allUsers = false;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "MS_TRIP_USER", joinColumns = @JoinColumn(name = "trip_id"))
     @OrderColumn(name = "sort_order")

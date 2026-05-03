@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS ms_trip (
     destination varchar(255),
     date_range varchar(255),
     notes varchar(2000),
+    all_users boolean DEFAULT false,
     created_by varchar(255),
     created_date timestamp,
     updated_by varchar(255),
@@ -100,6 +101,7 @@ ALTER TABLE ms_customer ALTER COLUMN record_status SET DEFAULT 'A';
 ALTER TABLE ms_trip ALTER COLUMN record_status SET DEFAULT 'A';
 ALTER TABLE ms_trip_plan ALTER COLUMN record_status SET DEFAULT 'A';
 
+ALTER TABLE ms_trip ADD COLUMN IF NOT EXISTS all_users boolean DEFAULT false;
 ALTER TABLE ms_user ADD COLUMN IF NOT EXISTS last_latitude double precision;
 ALTER TABLE ms_user ADD COLUMN IF NOT EXISTS last_longitude double precision;
 ALTER TABLE ms_user ADD COLUMN IF NOT EXISTS last_location_updated_at timestamp;

@@ -14,6 +14,7 @@ export type Trip = {
   destination: string;
   dateRange: string;
   notes: string;
+  allUsers?: boolean;
   users: string[];
   plans: TripPlanItem[];
 };

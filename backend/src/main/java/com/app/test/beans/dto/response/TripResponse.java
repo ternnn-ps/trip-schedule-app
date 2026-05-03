@@ -12,6 +12,7 @@ public class TripResponse {
     private String destination;
     private String dateRange;
     private String notes;
+    private Boolean allUsers;
     private List<String> users;
     private List<TripPlanResponse> plans;
 }

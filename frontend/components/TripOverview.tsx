@@ -11,6 +11,13 @@ import {
   updateTrip,
 } from "@/services/tripStore";
 import { UserService } from "@/services/UserService";
+import {
+  getAuthDisplayName,
+  getAuthUser,
+  getAuthUserServerSnapshot,
+  subscribeAuth,
+} from "@/services/authStore";
+import { canEditTrip } from "@/services/tripPermissions";
 import AddIcon from "@mui/icons-material/Add";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -25,6 +32,7 @@ import {
   Button,
   Card,
   CardContent,
+  Checkbox,
   Chip,
   CircularProgress,
   Dialog,
@@ -32,6 +40,7 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  FormControlLabel,
   IconButton,
   Menu,
   MenuItem,
@@ -55,6 +64,7 @@ type TripForm = {
   destination: string;
   startDate: string;
   endDate: string;
+  allUsers: boolean;
   users: string[];
   notes: string;
 };
@@ -63,6 +73,7 @@ type EditTripForm = {
   name: string;
   destination: string;
   dateRange: string;
+  allUsers: boolean;
   users: string[];
   notes: string;
 };
@@ -72,6 +83,7 @@ const emptyTripForm: TripForm = {
   destination: "",
   startDate: "",
   endDate: "",
+  allUsers: false,
   users: [],
   notes: "",
 };
@@ -80,6 +92,7 @@ const emptyEditTripForm: EditTripForm = {
   name: "",
   destination: "",
   dateRange: "",
+  allUsers: false,
   users: [],
   notes: "",
 };
@@ -115,6 +128,7 @@ function uniqueNames(names: string[]) {
 export default function TripOverview() {
   const router = useRouter();
   const trips = useSyncExternalStore(subscribeTrips, getTrips, getTripsServerSnapshot);
+  const authUser = useSyncExternalStore(subscribeAuth, getAuthUser, getAuthUserServerSnapshot);
   const [form, setForm] = useState(emptyTripForm);
   const [editForm, setEditForm] = useState(emptyEditTripForm);
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
@@ -204,11 +218,19 @@ export default function TripOverview() {
       return;
     }
 
+    const selectedUsers = form.allUsers
+      ? []
+      : uniqueNames([
+          ...form.users,
+          getAuthDisplayName(authUser),
+        ]);
+
     const nextTrip = createTrip({
       name: form.name.trim(),
       destination: form.destination.trim(),
       dateRange: formatDateRange(form.startDate, form.endDate),
-      users: uniqueNames(form.users),
+      allUsers: form.allUsers,
+      users: selectedUsers,
       notes: form.notes.trim(),
     });
 
@@ -219,12 +241,17 @@ export default function TripOverview() {
   }
 
   function handleOpenEditTrip(trip: Trip) {
+    if (!canEditTrip(trip, authUser)) {
+      return;
+    }
+
     setTripMenu(null);
     setEditingTrip(trip);
     setEditForm({
       name: trip.name,
       destination: trip.destination,
       dateRange: trip.dateRange,
+      allUsers: Boolean(trip.allUsers),
       users: trip.users,
       notes: trip.notes,
     });
@@ -239,11 +266,24 @@ export default function TripOverview() {
       return;
     }
 
+    if (!canEditTrip(editingTrip, authUser)) {
+      setEditError("You do not have permission to edit this trip.");
+      return;
+    }
+
+    const selectedUsers = editForm.allUsers
+      ? []
+      : uniqueNames([
+          ...editForm.users,
+          getAuthDisplayName(authUser),
+        ]);
+
     updateTrip(editingTrip.id, {
       name: editForm.name.trim(),
       destination: editForm.destination.trim(),
       dateRange: editForm.dateRange.trim(),
-      users: uniqueNames(editForm.users),
+      allUsers: editForm.allUsers,
+      users: selectedUsers,
       notes: editForm.notes.trim(),
     });
 
@@ -253,12 +293,21 @@ export default function TripOverview() {
   }
 
   function handleOpenDeleteTrip(trip: Trip) {
+    if (!canEditTrip(trip, authUser)) {
+      return;
+    }
+
     setTripMenu(null);
     setTripToDelete(trip);
   }
 
   function handleConfirmDeleteTrip() {
     if (!tripToDelete) {
+      return;
+    }
+
+    if (!canEditTrip(tripToDelete, authUser)) {
+      setTripToDelete(null);
       return;
     }
 
@@ -410,17 +459,19 @@ export default function TripOverview() {
                     </Box>
                     <Stack direction="row" spacing={0.75} sx={{ alignItems: "flex-start" }}>
                       <Chip label={`${trip.plans.length} plans`} size="small" />
-                      <IconButton
-                        aria-label={`Trip actions for ${trip.name}`}
-                        size="small"
-                        className="kebab-button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setTripMenu({ anchorEl: event.currentTarget, trip });
-                        }}
-                      >
-                        <MoreVertIcon fontSize="small" />
-                      </IconButton>
+                      {canEditTrip(trip, authUser) ? (
+                        <IconButton
+                          aria-label={`Trip actions for ${trip.name}`}
+                          size="small"
+                          className="kebab-button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setTripMenu({ anchorEl: event.currentTarget, trip });
+                          }}
+                        >
+                          <MoreVertIcon fontSize="small" />
+                        </IconButton>
+                      ) : null}
                     </Stack>
                   </Stack>
 
@@ -444,7 +495,9 @@ export default function TripOverview() {
                   </Box>
 
                   <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-                    {trip.users.length > 0 ? (
+                    {trip.allUsers ? (
+                      <Chip label="All users" size="small" color="primary" variant="outlined" />
+                    ) : trip.users.length > 0 ? (
                       trip.users.slice(0, 4).map((user) => (
                         <Chip key={user} label={user} size="small" variant="outlined" />
                       ))
@@ -528,6 +581,15 @@ export default function TripOverview() {
                   fullWidth
                 />
               </Box>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={form.allUsers}
+                    onChange={(event) => setForm({ ...form, allUsers: event.target.checked })}
+                  />
+                }
+                label="All users can view and edit this trip"
+              />
               <Autocomplete
                 multiple
                 options={userOptions}
@@ -536,6 +598,7 @@ export default function TripOverview() {
                   setForm({ ...form, users });
                   setUsersError("");
                 }}
+                disabled={form.allUsers}
                 loading={usersLoading}
                 filterSelectedOptions
                 renderInput={(params) => (
@@ -545,10 +608,12 @@ export default function TripOverview() {
                     placeholder="Select users"
                     error={Boolean(usersError)}
                     helperText={
-                      usersError ||
-                      (usersLoading
-                        ? "Loading users from database..."
-                        : "Select database users who can view and edit this trip.")
+                      form.allUsers
+                        ? "Everyone can access this trip."
+                        : usersError ||
+                          (usersLoading
+                            ? "Loading users from database..."
+                            : "Select database users")
                     }
                     slotProps={{
                       ...params.slotProps,
@@ -624,6 +689,15 @@ export default function TripOverview() {
               <TextField label="Trip name" value={editForm.name} onChange={(event) => setEditForm({ ...editForm, name: event.target.value })} fullWidth />
               <TextField label="Destination" value={editForm.destination} onChange={(event) => setEditForm({ ...editForm, destination: event.target.value })} fullWidth />
               <TextField label="Date range" value={editForm.dateRange} onChange={(event) => setEditForm({ ...editForm, dateRange: event.target.value })} fullWidth />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={editForm.allUsers}
+                    onChange={(event) => setEditForm({ ...editForm, allUsers: event.target.checked })}
+                  />
+                }
+                label="All users can view and edit this trip"
+              />
               <Autocomplete
                 multiple
                 options={userOptions}
@@ -632,6 +706,7 @@ export default function TripOverview() {
                   setEditForm({ ...editForm, users });
                   setUsersError("");
                 }}
+                disabled={editForm.allUsers}
                 loading={usersLoading}
                 filterSelectedOptions
                 renderInput={(params) => (
@@ -641,10 +716,12 @@ export default function TripOverview() {
                     placeholder="Select users"
                     error={Boolean(usersError)}
                     helperText={
-                      usersError ||
-                      (usersLoading
-                        ? "Loading users from database..."
-                        : "Select database users who can view and edit this trip.")
+                      editForm.allUsers
+                        ? "Everyone can access this trip."
+                        : usersError ||
+                          (usersLoading
+                            ? "Loading users from database..."
+                            : "Select database users")
                     }
                     slotProps={{
                       ...params.slotProps,

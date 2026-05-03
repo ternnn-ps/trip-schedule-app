@@ -90,6 +90,7 @@ public class TripServiceImpl implements TripService {
             entity.setDestination(request.getDestination());
             entity.setDateRange(request.getDateRange());
             entity.setNotes(request.getNotes());
+            entity.setAllUsers(Boolean.TRUE.equals(request.getAllUsers()));
             entity.setUsers(copyUsers(request.getUsers()));
             entity.setCreatedBy("Admin");
             entity.setCreatedDate(now);
@@ -125,6 +126,7 @@ public class TripServiceImpl implements TripService {
             entity.setDestination(request.getDestination());
             entity.setDateRange(request.getDateRange());
             entity.setNotes(request.getNotes());
+            entity.setAllUsers(Boolean.TRUE.equals(request.getAllUsers()));
             entity.setUsers(copyUsers(request.getUsers()));
             entity.setUpdatedBy("Admin");
             entity.setUpdatedDate(new Date());
@@ -315,6 +317,7 @@ public class TripServiceImpl implements TripService {
         response.setDestination(entity.getDestination());
         response.setDateRange(entity.getDateRange());
         response.setNotes(entity.getNotes());
+        response.setAllUsers(Boolean.TRUE.equals(entity.getAllUsers()));
         response.setUsers(entity.getUsers() == null ? new ArrayList<>() : new ArrayList<>(entity.getUsers()));
         response.setPlans(entity.getPlans()
                 .stream()
