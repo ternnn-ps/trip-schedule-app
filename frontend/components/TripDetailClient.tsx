@@ -689,21 +689,19 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
               </Stack>
             </Box>
             <Stack className="trip-user-panel-actions">
-              {canEditCurrentTrip && !trip.allUsers ? (
-                <Button
-                  type="button"
-                  variant="outlined"
-                  className="trip-user-action-button"
-                  aria-label="Add user"
-                  onClick={() => setAddUserDialogOpen(true)}
-                  disabled={usersLoading}
-                >
-                  {usersLoading ? <CircularProgress size={18} /> : <PersonAddIcon />}
-                  <Box component="span" className="trip-user-action-label">
-                    Add User
-                  </Box>
-                </Button>
-              ) : null}
+              <Button
+                type="button"
+                variant="outlined"
+                className="trip-user-action-button"
+                aria-label="Add user"
+                onClick={() => setAddUserDialogOpen(true)}
+                disabled={usersLoading || !canEditCurrentTrip || trip.allUsers}
+              >
+                {usersLoading ? <CircularProgress size={18} /> : <PersonAddIcon />}
+                <Box component="span" className="trip-user-action-label">
+                  Add User
+                </Box>
+              </Button>
               <Button
                 type="button"
                 variant="outlined"
