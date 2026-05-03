@@ -231,6 +231,8 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
     plan: TripPlanItem;
   } | null>(null);
   const [tripMenuAnchorEl, setTripMenuAnchorEl] = useState<HTMLElement | null>(null);
+  const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
+  const [usersMapOpen, setUsersMapOpen] = useState(false);
   const [tripEditOpen, setTripEditOpen] = useState(false);
   const [tripEditForm, setTripEditForm] = useState(emptyTripEditForm);
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>(null);
@@ -423,6 +425,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
 
     addUserToTrip(trip.id, getUserDisplayName(selectedUser));
     setSelectedUser(null);
+    setAddUserDialogOpen(false);
   }
 
   function handleRemoveUser(userName: string) {
@@ -534,6 +537,17 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
   );
   const hasSelectedDayOutsideOptions = Boolean(form.day) && !dayOptions.includes(form.day);
   const usersAvailableToAdd = availableUsers.filter((user) => !trip.users.includes(getUserDisplayName(user)));
+  const tripUserLocations = trip.users
+    .map((userName) => ({
+      name: userName,
+      user: findTripUser(userName),
+    }))
+    .filter((item): item is { name: string; user: User } => userHasLocation(item.user))
+    .map((item) => ({
+      label: item.name,
+      latitude: String(item.user.lastLatitude),
+      longitude: String(item.user.lastLongitude),
+    }));
   const planMenuOpen = Boolean(planMenu);
   const tripMenuOpen = Boolean(tripMenuAnchorEl);
   const confirmDialogTitle =
@@ -619,65 +633,26 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                 )}
               </Stack>
             </Box>
-            <Box component="form" onSubmit={handleAddUser} className="add-user-form">
-              <Autocomplete
-                options={usersAvailableToAdd}
-                value={selectedUser}
-                onChange={(_, user) => {
-                  setSelectedUser(user);
-                  setUsersError("");
-                }}
-                loading={usersLoading}
-                getOptionKey={getUserKey}
-                getOptionLabel={getUserDisplayName}
-                isOptionEqualToValue={(option, value) => getUserKey(option) === getUserKey(value)}
-                noOptionsText={availableUsers.length === 0 ? "No users found" : "All database users are already in this trip"}
-                renderOption={(props, user) => (
-                  <Box component="li" {...props} key={getUserKey(user)}>
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography sx={{ fontWeight: 800 }}>{getUserDisplayName(user)}</Typography>
-                      <Typography noWrap sx={{ color: "var(--muted)", fontSize: "0.84rem" }}>
-                        {user.email || user.userName || "Database user"}
-                      </Typography>
-                    </Box>
-                  </Box>
-                )}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Add user"
-                    helperText={
-                      usersError ||
-                      (usersLoading
-                        ? "Loading users from database..."
-                        : "")
-                    }
-                    error={Boolean(usersError)}
-                    size="small"
-                    slotProps={{
-                      ...params.slotProps,
-                      input: {
-                        ...params.slotProps?.input,
-                        endAdornment: (
-                          <>
-                            {usersLoading ? <CircularProgress color="inherit" size={18} /> : null}
-                            {params.slotProps?.input?.endAdornment}
-                          </>
-                        ),
-                      },
-                    }}
-                  />
-                )}
-              />
+            <Stack className="trip-user-panel-actions">
               <Button
-                type="submit"
+                type="button"
                 variant="outlined"
                 startIcon={usersLoading ? <CircularProgress size={16} /> : <PersonAddIcon />}
-                disabled={usersLoading || !selectedUser}
+                onClick={() => setAddUserDialogOpen(true)}
+                disabled={usersLoading}
               >
-                Grant Access
+                Add User
               </Button>
-            </Box>
+              <Button
+                type="button"
+                variant="outlined"
+                startIcon={<MapIcon />}
+                onClick={() => setUsersMapOpen(true)}
+                disabled={trip.users.length === 0}
+              >
+                Map
+              </Button>
+            </Stack>
           </Stack>
         </CardContent>
       </Card>
@@ -689,7 +664,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                 Itinerary
               </Typography>
               <Typography sx={{ color: "var(--muted)" }}>
-                Plans are grouped by day for quick scanning.
+                {/* Plans are grouped by day for quick scanning. */}
               </Typography>
             </Box>
             <Stack
@@ -830,6 +805,136 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
         <ListItemText>Delete plan</ListItemText>
       </MenuItem>
     </Menu>
+
+    <Dialog
+      open={addUserDialogOpen}
+      onClose={() => setAddUserDialogOpen(false)}
+      fullWidth
+      maxWidth="sm"
+    >
+      <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontWeight: 900 }}>
+        Add User
+        <IconButton onClick={() => setAddUserDialogOpen(false)} aria-label="Close dialog">
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+
+      <Box component="form" onSubmit={handleAddUser}>
+        <DialogContent>
+          <Stack spacing={2}>
+            <Typography sx={{ color: "var(--muted)" }}>
+              Select a database user to join this trip.
+            </Typography>
+            <Autocomplete
+              options={usersAvailableToAdd}
+              value={selectedUser}
+              onChange={(_, user) => {
+                setSelectedUser(user);
+                setUsersError("");
+              }}
+              loading={usersLoading}
+              getOptionKey={getUserKey}
+              getOptionLabel={getUserDisplayName}
+              isOptionEqualToValue={(option, value) => getUserKey(option) === getUserKey(value)}
+              noOptionsText={availableUsers.length === 0 ? "No users found" : "All database users are already in this trip"}
+              renderOption={(props, user) => (
+                <Box component="li" {...props} key={getUserKey(user)}>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography sx={{ fontWeight: 800 }}>{getUserDisplayName(user)}</Typography>
+                    <Typography noWrap sx={{ color: "var(--muted)", fontSize: "0.84rem" }}>
+                      {user.email || user.userName || "Database user"}
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="User"
+                  helperText={
+                    usersError ||
+                    (usersLoading
+                      ? "Loading users from database..."
+                      : "")
+                  }
+                  error={Boolean(usersError)}
+                  slotProps={{
+                    ...params.slotProps,
+                    input: {
+                      ...params.slotProps?.input,
+                      endAdornment: (
+                        <>
+                          {usersLoading ? <CircularProgress color="inherit" size={18} /> : null}
+                          {params.slotProps?.input?.endAdornment}
+                        </>
+                      ),
+                    },
+                  }}
+                />
+              )}
+            />
+          </Stack>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={() => setAddUserDialogOpen(false)}>Cancel</Button>
+          <Button
+            type="submit"
+            variant="contained"
+            className="travel-primary-button"
+            startIcon={<PersonAddIcon />}
+            disabled={usersLoading || !selectedUser}
+          >
+            Add to Trip
+          </Button>
+        </DialogActions>
+      </Box>
+    </Dialog>
+
+    <Dialog
+      open={usersMapOpen}
+      onClose={() => setUsersMapOpen(false)}
+      fullWidth
+      maxWidth="md"
+    >
+      <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontWeight: 900 }}>
+        User Locations
+        <IconButton onClick={() => setUsersMapOpen(false)} aria-label="Close dialog">
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent>
+        <Stack spacing={2}>
+          {tripUserLocations.length > 0 ? (
+            <>
+              <LocationPicker
+                latitude=""
+                longitude=""
+                markers={tripUserLocations}
+                readOnly
+              />
+              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+                {tripUserLocations.map((marker) => (
+                  <Chip
+                    key={`${marker.label}-${marker.latitude}-${marker.longitude}`}
+                    icon={<LocationOnIcon />}
+                    label={marker.label}
+                    variant="outlined"
+                  />
+                ))}
+              </Stack>
+            </>
+          ) : (
+            <Box className="travel-empty-state">
+              <Typography sx={{ fontWeight: 900 }}>No user locations yet</Typography>
+              <Typography sx={{ color: "var(--muted)", mt: 0.75 }}>
+                Trip users need to open the trip page and allow location access once before they appear on this map.
+              </Typography>
+            </Box>
+          )}
+        </Stack>
+      </DialogContent>
+    </Dialog>
 
     <Dialog
       open={planDialogOpen}

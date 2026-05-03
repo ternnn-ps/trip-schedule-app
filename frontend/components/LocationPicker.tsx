@@ -18,9 +18,16 @@ type LeafletModule = typeof import("leaflet");
 type LocationPickerProps = {
   latitude: string;
   longitude: string;
+  markers?: LocationMarker[];
   onChange?: (coordinates: { latitude: string; longitude: string }) => void;
   onPlaceSelect?: (placeName: string) => void;
   readOnly?: boolean;
+};
+
+export type LocationMarker = {
+  label: string;
+  latitude: string;
+  longitude: string;
 };
 
 type PlaceSearchResult = {
@@ -77,9 +84,18 @@ function formatCoordinates([latitude, longitude]: [number, number]) {
   };
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 export default function LocationPicker({
   latitude,
   longitude,
+  markers = [],
   onChange,
   onPlaceSelect,
   readOnly = false,
@@ -92,11 +108,15 @@ export default function LocationPicker({
   const leafletRef = useRef<LeafletModule | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
+  const markerRefs = useRef<Marker[]>([]);
   const autoPinnedRef = useRef(false);
   const onChangeRef = useRef(onChange);
   const onPlaceSelectRef = useRef(onPlaceSelect);
   const initialCoordinatesRef = useRef(parseCoordinates(latitude, longitude));
   const initialCenterRef = useRef(initialCoordinatesRef.current ?? defaultCenter);
+  const markerSignature = markers
+    .map((marker) => `${marker.label}:${marker.latitude},${marker.longitude}`)
+    .join("|");
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -152,7 +172,33 @@ export default function LocationPicker({
 
       const initialCoordinates = initialCoordinatesRef.current;
 
-      if (initialCoordinates) {
+      if (markers.length > 0) {
+        const bounds: [number, number][] = [];
+
+        markers.forEach((marker) => {
+          const coordinates = parseCoordinates(marker.latitude, marker.longitude);
+
+          if (!coordinates) {
+            return;
+          }
+
+          const labeledIcon = leaflet.divIcon({
+            className: "leaflet-named-pin-icon",
+            html: `<span></span><strong>${escapeHtml(marker.label)}</strong>`,
+            iconSize: [120, 32],
+            iconAnchor: [13, 16],
+          });
+
+          markerRefs.current.push(leaflet.marker(coordinates, { icon: labeledIcon }).addTo(map));
+          bounds.push(coordinates);
+        });
+
+        if (bounds.length === 1) {
+          map.setView(bounds[0], 13);
+        } else if (bounds.length > 1) {
+          map.fitBounds(bounds, { padding: [28, 28], maxZoom: 13 });
+        }
+      } else if (initialCoordinates) {
         const pinIcon = leaflet.divIcon({
           className: "leaflet-pin-icon",
           html: "<span></span>",
@@ -171,9 +217,10 @@ export default function LocationPicker({
       mapRef.current?.remove();
       mapRef.current = null;
       markerRef.current = null;
+      markerRefs.current = [];
       leafletRef.current = null;
     };
-  }, [readOnly]);
+  }, [readOnly, markerSignature]);
 
   useEffect(() => {
     if (readOnly || autoPinnedRef.current || parseCoordinates(latitude, longitude)) {
@@ -214,6 +261,42 @@ export default function LocationPicker({
       return;
     }
 
+    markerRefs.current.forEach((marker) => marker.remove());
+    markerRefs.current = [];
+
+    if (markers.length > 0) {
+      markerRef.current?.remove();
+      markerRef.current = null;
+
+      const bounds: [number, number][] = [];
+
+      markers.forEach((marker) => {
+        const coordinates = parseCoordinates(marker.latitude, marker.longitude);
+
+        if (!coordinates) {
+          return;
+        }
+
+        const labeledIcon = leaflet.divIcon({
+          className: "leaflet-named-pin-icon",
+          html: `<span></span><strong>${escapeHtml(marker.label)}</strong>`,
+          iconSize: [120, 32],
+          iconAnchor: [13, 16],
+        });
+
+        markerRefs.current.push(leaflet.marker(coordinates, { icon: labeledIcon }).addTo(map));
+        bounds.push(coordinates);
+      });
+
+      if (bounds.length === 1) {
+        map.setView(bounds[0], Math.max(map.getZoom(), 13));
+      } else if (bounds.length > 1) {
+        map.fitBounds(bounds, { padding: [28, 28], maxZoom: 13 });
+      }
+
+      return;
+    }
+
     const nextCoordinates = parseCoordinates(latitude, longitude);
 
     if (!nextCoordinates) {
@@ -236,7 +319,7 @@ export default function LocationPicker({
     }
 
     map.setView(nextCoordinates, Math.max(map.getZoom(), 13));
-  }, [latitude, longitude]);
+  }, [latitude, longitude, markerSignature]);
 
   async function handleSearchPlace() {
     const trimmedQuery = query.trim();

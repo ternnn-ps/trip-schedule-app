@@ -413,6 +413,11 @@ html[data-theme="dark"] .sidebar-shell {
   justify-content: flex-end;
 }
 
+.trip-user-panel-actions {
+  align-items: stretch;
+  min-width: 180px;
+}
+
 .trip-note {
   display: -webkit-box;
   min-height: 48px;
@@ -536,6 +541,37 @@ html[data-theme="dark"] .map-preview {
   background: #ffffff;
 }
 
+.leaflet-named-pin-icon {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.leaflet-named-pin-icon span {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  background: var(--coral);
+  box-shadow: 0 8px 20px rgba(214, 90, 49, 0.32);
+}
+
+.leaflet-named-pin-icon strong {
+  max-width: 92px;
+  overflow: hidden;
+  padding: 4px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-strong);
+  box-shadow: 0 8px 20px var(--shadow-card);
+  color: var(--foreground);
+  font-size: 0.75rem;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (min-width: 700px) {
   .summary-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -551,6 +587,10 @@ html[data-theme="dark"] .map-preview {
     min-width: 360px;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
+  }
+
+  .trip-user-panel-actions {
+    align-items: flex-end;
   }
 }
 
