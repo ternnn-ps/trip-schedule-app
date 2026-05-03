@@ -61,7 +61,7 @@ export default function Sidebar({
               <MapIcon fontSize="small" />
             </Box>
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography sx={{ fontWeight: 900, lineHeight: 1 }}>Travel</Typography>
+              <Typography sx={{ fontWeight: 900, lineHeight: 1 }}>Trip</Typography>
               <Typography sx={{ color: "var(--sidebar-muted)", fontSize: "0.86rem" }}>
                 Schedule App
               </Typography>
