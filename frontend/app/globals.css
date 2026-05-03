@@ -380,6 +380,16 @@ html[data-theme="dark"] .sidebar-shell {
   white-space: nowrap;
 }
 
+.plan-map-actions {
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-map-actions .MuiButton-root {
+  min-width: 0;
+  white-space: nowrap;
+}
+
 .add-trip-button {
   width: 42px !important;
   height: 42px !important;
@@ -546,6 +556,18 @@ html[data-theme="dark"] .map-preview {
   .section-heading .itinerary-add-plan-button {
     flex: 0 0 auto;
     width: auto;
+  }
+
+  .plan-map-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, max-content);
+    justify-content: start;
+    width: 100%;
+  }
+
+  .plan-map-actions .MuiButton-root {
+    justify-content: flex-start;
+    padding-inline: 0;
   }
 
   .travel-trip-card .MuiCardContent-root,

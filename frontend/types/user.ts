@@ -5,6 +5,7 @@ export interface User {
   email: string;
   phone: string;
   website: string;
+  password?: string;
   lastLatitude?: number;
   lastLongitude?: number;
   lastLocationUpdatedAt?: string;

@@ -1,7 +1,8 @@
 package com.app.test.service;
 
-import com.app.test.beans.dto.request.UserRequest;
+import com.app.test.beans.dto.request.UserLoginRequest;
 import com.app.test.beans.dto.request.UserLocationRequest;
+import com.app.test.beans.dto.request.UserRequest;
 import com.app.test.beans.dto.response.PageResponse;
 import com.app.test.beans.dto.response.UserResponse;
 import com.app.test.beans.dto.response.base.ResponseModelDto;
@@ -22,6 +23,8 @@ public interface UserManagementService {
     public ResponseModelDto<UserResponse> update(UserRequest request);
 
     public ResponseModelDto<UserResponse> updateLocation(UserLocationRequest request);
+
+    public ResponseModelDto<UserResponse> login(UserLoginRequest request);
 
     public ResponseModelDto<UserResponse> delete(UserRequest request);
 

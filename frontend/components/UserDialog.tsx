@@ -87,6 +87,12 @@ export default function UserDialog({
       nextErrors.website = "Use a valid website URL or domain.";
     }
 
+    if (!form.userId && !form.password?.trim()) {
+      nextErrors.password = "Password is required.";
+    } else if (form.password?.trim() && form.password.trim().length < 8) {
+      nextErrors.password = "Password must be at least 8 characters.";
+    }
+
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -113,6 +119,7 @@ export default function UserDialog({
         email: form.email.trim(),
         phone: form.phone.trim(),
         website: form.website.trim(),
+        password: form.password?.trim() || undefined,
       };
 
       const response = payload.userId
@@ -191,6 +198,16 @@ export default function UserDialog({
               fullWidth
             />
           </Stack>
+
+          <TextField
+            label={form.userId ? "New password" : "Password"}
+            type="password"
+            value={form.password ?? ""}
+            error={Boolean(errors.password)}
+            helperText={errors.password || (form.userId ? "Optional. Leave blank to keep current password." : "At least 8 characters.")}
+            onChange={(event) => updateField("password", event.target.value)}
+            fullWidth
+          />
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 3 }}>

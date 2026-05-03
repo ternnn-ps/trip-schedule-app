@@ -2,7 +2,6 @@
 
 import { loginWithUser } from "@/services/authStore";
 import { UserService } from "@/services/UserService";
-import { User } from "@/types/user";
 import LoginIcon from "@mui/icons-material/Login";
 import MapIcon from "@mui/icons-material/Map";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -24,14 +23,6 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 const userService = new UserService();
-
-function matchesLoginIdentifier(user: User, loginIdentifier: string) {
-  const normalizedIdentifier = loginIdentifier.trim().toLowerCase();
-
-  return [user.userName, user.email]
-    .filter(Boolean)
-    .some((value) => value.trim().toLowerCase() === normalizedIdentifier);
-}
 
 export default function LoginClient() {
   const router = useRouter();
@@ -58,26 +49,14 @@ export default function LoginClient() {
       setLoading(true);
       setError("");
 
-      const response = await userService.search(
-        { keyword: loginIdentifier.trim() },
-        0,
-        10,
-        [{ field: "userName", order: 1 }],
-      );
+      const response = await userService.login(loginIdentifier.trim(), password);
 
-      if (!response?.result) {
-        setError(response?.msgDetail || "Could not check this user.");
+      if (!response?.result || !response.body) {
+        setError(response?.msgDetail || "Invalid username/email or password.");
         return;
       }
 
-      const matchedUser = response.body?.content?.find((user) => matchesLoginIdentifier(user, loginIdentifier));
-
-      if (!matchedUser) {
-        setError("No user found with that username or email.");
-        return;
-      }
-
-      loginWithUser(matchedUser);
+      loginWithUser(response.body);
       router.replace("/");
     } catch (loginError) {
       console.error("Login failed:", loginError);
@@ -163,10 +142,6 @@ export default function LoginClient() {
                 </Button>
               </Stack>
             </Box>
-
-            <Typography sx={{ color: "var(--muted)", fontSize: "0.86rem" }}>
-              {/* Note: password is required here, but real password verification still needs a backend auth endpoint. */}
-            </Typography>
           </Stack>
         </CardContent>
       </Card>

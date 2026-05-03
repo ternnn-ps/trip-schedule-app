@@ -6,6 +6,7 @@ const API_TIMEOUT_MS = 5000;
 
 export const USER_API_PATH = {
   search: "/user/search",
+  login: "/user/login",
   create: "/user/create",
   update: "/user/update",
   delete: "/user/delete",
@@ -32,6 +33,15 @@ export class UserService {
     const url = `${BASE_URL}${USER_API_PATH.search}${paging}${keywordParam}`;
 
     const response = await axios.get(url, { timeout: API_TIMEOUT_MS });
+    return response.data;
+  }
+
+  async login(loginIdentifier: string, password: string): Promise<ResponseModel<User> | undefined> {
+    const response = await axios.post(`${BASE_URL}${USER_API_PATH.login}`, {
+      loginIdentifier,
+      password,
+    }, { timeout: API_TIMEOUT_MS });
+
     return response.data;
   }
 

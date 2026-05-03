@@ -1,5 +1,6 @@
 package com.app.test.service.Impl;
 
+import com.app.test.beans.dto.request.UserLoginRequest;
 import com.app.test.beans.dto.request.UserRequest;
 import com.app.test.beans.dto.request.UserLocationRequest;
 import com.app.test.beans.dto.response.PageResponse;
@@ -24,6 +25,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -85,7 +87,7 @@ public class UserManagementServiceImpl implements UserManagementService {
     public ResponseModelDto<UserResponse> create(UserRequest request) {
 
         try {
-            String validationMessage = validateRequest(request);
+            String validationMessage = validateRequest(request, true);
 
             if (validationMessage != null) {
                 return new ResponseModelDto<>(
@@ -132,7 +134,7 @@ public class UserManagementServiceImpl implements UserManagementService {
     public ResponseModelDto<UserResponse> update(UserRequest request) {
 
         try {
-            String validationMessage = validateRequest(request);
+            String validationMessage = validateRequest(request, false);
 
             if (validationMessage != null) {
                 return new ResponseModelDto<>(
@@ -241,6 +243,41 @@ public class UserManagementServiceImpl implements UserManagementService {
     }
 
     @Override
+    public ResponseModelDto<UserResponse> login(UserLoginRequest request) {
+        try {
+            if (request == null || !hasText(request.getLoginIdentifier()) || !hasText(request.getPassword())) {
+                return new ResponseModelDto<>("Failed", "Username/email and password are required", null, false);
+            }
+
+            String loginIdentifier = request.getLoginIdentifier().trim();
+            Optional<MsUser> user = msUserRepository.findByUserNameIgnoreCaseAndRecordStatus(loginIdentifier, 'A');
+
+            if (!user.isPresent()) {
+                user = msUserRepository.findByEmailIgnoreCaseAndRecordStatus(loginIdentifier, 'A');
+            }
+
+            if (!user.isPresent()) {
+                return new ResponseModelDto<>("Failed", "Invalid username/email or password", null, false);
+            }
+
+            MsUser entity = user.get();
+
+            if (!hasText(entity.getPasswordHash())) {
+                return new ResponseModelDto<>("Failed", "This user does not have a password set", null, false);
+            }
+
+            if (!passwordEncoder.matches(request.getPassword().trim(), entity.getPasswordHash())) {
+                return new ResponseModelDto<>("Failed", "Invalid username/email or password", null, false);
+            }
+
+            return new ResponseModelDto<>("Success", mapToResponse(entity), true);
+
+        } catch (Exception e) {
+            return new ResponseModelDto<>("Error", e.getMessage(), null, false);
+        }
+    }
+
+    @Override
     public ResponseModelDto<UserResponse> delete(UserRequest request) {
 
         try {
@@ -307,7 +344,7 @@ public class UserManagementServiceImpl implements UserManagementService {
         return PageRequest.of(safePage, safeSize, Sort.by(orders));
     }
 
-    private String validateRequest(UserRequest request) {
+    private String validateRequest(UserRequest request, boolean passwordRequired) {
         if (request == null) {
             return "Request body is required";
         }
@@ -322,6 +359,10 @@ public class UserManagementServiceImpl implements UserManagementService {
 
         if (!hasText(request.getEmail())) {
             return "E-mail is required";
+        }
+
+        if (passwordRequired && !hasText(request.getPassword())) {
+            return "Password is required";
         }
 
         if (hasText(request.getPassword()) && request.getPassword().trim().length() < 8) {

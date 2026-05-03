@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 @EnableJpaRepositories
 public interface MsUserRepository extends JpaRepository<MsUser, Long> {
@@ -34,4 +36,8 @@ public interface MsUserRepository extends JpaRepository<MsUser, Long> {
     );
 
     Page<MsUser> findByRecordStatus(Character recordStatus, Pageable pageable);
+
+    Optional<MsUser> findByUserNameIgnoreCaseAndRecordStatus(String userName, Character recordStatus);
+
+    Optional<MsUser> findByEmailIgnoreCaseAndRecordStatus(String email, Character recordStatus);
 }

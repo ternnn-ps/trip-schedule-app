@@ -107,6 +107,17 @@ function parsePlanDayNumber(day: string) {
   return dayNumber;
 }
 
+function comparePlansByDayAndTime(first: TripPlanItem, second: TripPlanItem) {
+  const firstDay = parsePlanDayNumber(first.day) ?? Number.MAX_SAFE_INTEGER;
+  const secondDay = parsePlanDayNumber(second.day) ?? Number.MAX_SAFE_INTEGER;
+
+  if (firstDay !== secondDay) {
+    return firstDay - secondDay;
+  }
+
+  return first.time.localeCompare(second.time) || first.place.localeCompare(second.place);
+}
+
 function getUserDisplayName(user: User) {
   return user.userFullName?.trim() || user.userName?.trim() || user.email?.trim() || "Unnamed user";
 }
@@ -513,7 +524,8 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
     );
   }
 
-  const plansByDay = trip.plans.reduce<Record<string, typeof trip.plans>>((groups, plan) => {
+  const sortedPlans = [...trip.plans].sort(comparePlansByDayAndTime);
+  const plansByDay = sortedPlans.reduce<Record<string, typeof trip.plans>>((groups, plan) => {
     groups[plan.day] = [...(groups[plan.day] ?? []), plan];
     return groups;
   }, {});
@@ -731,7 +743,12 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                                     longitude={plan.longitude}
                                     readOnly
                                   />
-                                  <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", mt: 1 }}>
+                                  <Stack
+                                    className="plan-map-actions"
+                                    direction="row"
+                                    spacing={0}
+                                    sx={{ flexWrap: "wrap", mt: 1 }}
+                                  >
                                     <Button
                                       component="a"
                                       href={googleMapUrl}
@@ -763,7 +780,12 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                                   <Typography sx={{ color: "var(--muted)", fontSize: "0.88rem" }}>
                                     Google Maps details are linked for this stop.
                                   </Typography>
-                                  <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", mt: 1 }}>
+                                  <Stack
+                                    className="plan-map-actions"
+                                    direction="row"
+                                    spacing={0}
+                                    sx={{ flexWrap: "wrap", mt: 1 }}
+                                  >
                                     <Button
                                       component="a"
                                       href={googleMapUrl}
