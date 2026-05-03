@@ -36,6 +36,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import MapIcon from "@mui/icons-material/Map";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import RateReviewIcon from "@mui/icons-material/RateReview";
 import {
   Alert,
   Autocomplete,
@@ -743,6 +744,40 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                                     >
                                       Open map
                                     </Button>
+                                    {plan.googleMapUrl ? (
+                                      <>
+                                        <Button
+                                          component="a"
+                                          href={googleMapUrl}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          startIcon={<ImageIcon />}
+                                          size="small"
+                                          sx={{ px: 0 }}
+                                        >
+                                          Photo
+                                        </Button>
+                                        <Button
+                                          component="a"
+                                          href={googleMapUrl}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          startIcon={<RateReviewIcon />}
+                                          size="small"
+                                          sx={{ px: 0 }}
+                                        >
+                                          Review
+                                        </Button>
+                                      </>
+                                    ) : null}
+                                  </Stack>
+                                </Box>
+                              ) : plan.googleMapUrl ? (
+                                <Box className="plan-place-panel" sx={{ mt: 1.5 }}>
+                                  <Typography sx={{ color: "var(--muted)", fontSize: "0.88rem" }}>
+                                    Google Maps details are linked for this stop.
+                                  </Typography>
+                                  <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", mt: 1 }}>
                                     <Button
                                       component="a"
                                       href={googleMapUrl}
@@ -752,26 +787,20 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                                       size="small"
                                       sx={{ px: 0 }}
                                     >
-                                      Photos & reviews
+                                      Photo
+                                    </Button>
+                                    <Button
+                                      component="a"
+                                      href={googleMapUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      startIcon={<RateReviewIcon />}
+                                      size="small"
+                                      sx={{ px: 0 }}
+                                    >
+                                      Review
                                     </Button>
                                   </Stack>
-                                </Box>
-                              ) : plan.googleMapUrl ? (
-                                <Box className="plan-place-panel" sx={{ mt: 1.5 }}>
-                                  <Typography sx={{ color: "var(--muted)", fontSize: "0.88rem" }}>
-                                    Google Maps details are linked for this stop.
-                                  </Typography>
-                                  <Button
-                                    component="a"
-                                    href={googleMapUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    startIcon={<ImageIcon />}
-                                    size="small"
-                                    sx={{ mt: 1, px: 0 }}
-                                  >
-                                    Open photos & reviews
-                                  </Button>
                                 </Box>
                               ) : null}
                             </Box>
