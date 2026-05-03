@@ -96,6 +96,17 @@ function escapeHtml(value: string) {
     .replace(/"/g, "&quot;");
 }
 
+function createNamedPinHtml(label: string) {
+  return `
+    <span aria-hidden="true">
+      <svg viewBox="0 0 24 24" focusable="false">
+        <path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z" />
+      </svg>
+    </span>
+    <strong>${escapeHtml(label)}</strong>
+  `;
+}
+
 export default function LocationPicker({
   latitude,
   longitude,
@@ -191,7 +202,7 @@ export default function LocationPicker({
 
           const labeledIcon = leaflet.divIcon({
             className: "leaflet-named-pin-icon",
-            html: `<span></span><strong>${escapeHtml(marker.label)}</strong>`,
+            html: createNamedPinHtml(marker.label),
             iconSize: [120, 32],
             iconAnchor: [13, 16],
           });
@@ -293,7 +304,7 @@ export default function LocationPicker({
 
         const labeledIcon = leaflet.divIcon({
           className: "leaflet-named-pin-icon",
-          html: `<span></span><strong>${escapeHtml(marker.label)}</strong>`,
+          html: createNamedPinHtml(marker.label),
           iconSize: [120, 32],
           iconAnchor: [13, 16],
         });

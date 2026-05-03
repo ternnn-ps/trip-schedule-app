@@ -584,13 +584,21 @@ html[data-theme="dark"] .map-preview {
 }
 
 .leaflet-named-pin-icon span {
-  width: 18px;
-  height: 18px;
-  flex: 0 0 18px;
-  border: 3px solid #ffffff;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
   border-radius: 50%;
-  background: var(--coral);
-  box-shadow: 0 8px 20px rgba(214, 90, 49, 0.32);
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(214, 90, 49, 0.28);
+  color: var(--coral);
+  place-items: center;
+}
+
+.leaflet-named-pin-icon svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
 }
 
 .leaflet-named-pin-icon strong {
