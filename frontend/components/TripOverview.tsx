@@ -322,7 +322,7 @@ export default function TripOverview() {
               Trip Schedule
             </Typography>
             <Typography sx={{ color: "var(--muted)", mt: 0.75 }}>
-              Manage trips, compare schedule progress, and open any itinerary quickly.
+              {/* Manage trips, compare schedule progress, and open any itinerary quickly. */}
             </Typography>
           </Box>
         </Box>
@@ -408,7 +408,7 @@ export default function TripOverview() {
               Trips
             </Typography>
             <Typography sx={{ color: "var(--muted)" }}>
-              Pick one itinerary to add day, time, place, and detail.
+              {/* Pick one itinerary to add day, time, place, and detail. */}
             </Typography>
           </Box>
           <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
