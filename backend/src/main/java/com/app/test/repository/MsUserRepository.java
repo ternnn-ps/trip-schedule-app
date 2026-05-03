@@ -37,7 +37,19 @@ public interface MsUserRepository extends JpaRepository<MsUser, Long> {
 
     Page<MsUser> findByRecordStatus(Character recordStatus, Pageable pageable);
 
-    Optional<MsUser> findByUserNameIgnoreCaseAndRecordStatus(String userName, Character recordStatus);
+    @Query("SELECT u FROM MsUser u " +
+            "WHERE (u.recordStatus = :recordStatus OR u.recordStatus IS NULL) " +
+            "AND LOWER(u.userName) = LOWER(:userName)")
+    Optional<MsUser> findLoginUserByUserName(
+            @Param("userName") String userName,
+            @Param("recordStatus") Character recordStatus
+    );
 
-    Optional<MsUser> findByEmailIgnoreCaseAndRecordStatus(String email, Character recordStatus);
+    @Query("SELECT u FROM MsUser u " +
+            "WHERE (u.recordStatus = :recordStatus OR u.recordStatus IS NULL) " +
+            "AND LOWER(u.email) = LOWER(:email)")
+    Optional<MsUser> findLoginUserByEmail(
+            @Param("email") String email,
+            @Param("recordStatus") Character recordStatus
+    );
 }

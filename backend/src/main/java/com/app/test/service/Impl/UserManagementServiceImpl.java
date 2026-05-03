@@ -250,10 +250,10 @@ public class UserManagementServiceImpl implements UserManagementService {
             }
 
             String loginIdentifier = request.getLoginIdentifier().trim();
-            Optional<MsUser> user = msUserRepository.findByUserNameIgnoreCaseAndRecordStatus(loginIdentifier, 'A');
+            Optional<MsUser> user = msUserRepository.findLoginUserByUserName(loginIdentifier, 'A');
 
             if (!user.isPresent()) {
-                user = msUserRepository.findByEmailIgnoreCaseAndRecordStatus(loginIdentifier, 'A');
+                user = msUserRepository.findLoginUserByEmail(loginIdentifier, 'A');
             }
 
             if (!user.isPresent()) {
@@ -262,11 +262,7 @@ public class UserManagementServiceImpl implements UserManagementService {
 
             MsUser entity = user.get();
 
-            if (!hasText(entity.getPasswordHash())) {
-                return new ResponseModelDto<>("Failed", "This user does not have a password set", null, false);
-            }
-
-            if (!passwordEncoder.matches(request.getPassword().trim(), entity.getPasswordHash())) {
+            if (!isPasswordValid(request.getPassword().trim(), entity)) {
                 return new ResponseModelDto<>("Failed", "Invalid username/email or password", null, false);
             }
 
@@ -382,6 +378,36 @@ public class UserManagementServiceImpl implements UserManagementService {
         if (hasText(request.getPassword())) {
             entity.setPasswordHash(passwordEncoder.encode(request.getPassword().trim()));
         }
+    }
+
+    private boolean isPasswordValid(String rawPassword, MsUser entity) {
+        String storedPassword = entity.getPasswordHash();
+
+        if (!hasText(storedPassword)) {
+            return false;
+        }
+
+        String normalizedStoredPassword = storedPassword.trim();
+
+        if (isBcryptHash(normalizedStoredPassword)) {
+            return passwordEncoder.matches(rawPassword, normalizedStoredPassword);
+        }
+
+        if (!rawPassword.equals(normalizedStoredPassword)) {
+            return false;
+        }
+
+        entity.setPasswordHash(passwordEncoder.encode(rawPassword));
+        entity.setUpdatedBy("Login");
+        entity.setUpdatedDate(new Date());
+        msUserRepository.save(entity);
+        return true;
+    }
+
+    private boolean isBcryptHash(String value) {
+        return value.startsWith("$2a$")
+                || value.startsWith("$2b$")
+                || value.startsWith("$2y$");
     }
 
     private UserResponse mapToResponse(MsUser entity) {
