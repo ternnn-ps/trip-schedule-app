@@ -7,6 +7,7 @@ import {
   logoutUser,
   subscribeAuth,
 } from "@/services/authStore";
+import { syncTripsFromBackend } from "@/services/tripStore";
 import CloseIcon from "@mui/icons-material/Close";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
@@ -31,6 +32,10 @@ export type ThemeMode = "light" | "dark";
 
 const THEME_STORAGE_KEY = "travel-schedule-theme";
 const THEME_UPDATED_EVENT = "travel-theme-updated";
+const configuredTripRefreshInterval = Number(process.env.NEXT_PUBLIC_TRIP_REFRESH_INTERVAL_MS);
+const TRIP_REFRESH_INTERVAL_MS = Number.isFinite(configuredTripRefreshInterval)
+  ? Math.max(15_000, configuredTripRefreshInterval)
+  : 45_000;
 
 const lightTheme = createTheme({
   palette: {
@@ -130,6 +135,34 @@ export default function AppShell({ children }: { children: ReactNode }) {
       router.replace("/");
     }
   }, [authUser, isLoginPage, router]);
+
+  useEffect(() => {
+    if (!authUser || isLoginPage) {
+      return;
+    }
+
+    const refreshTrips = () => {
+      if (document.hidden || !navigator.onLine) {
+        return;
+      }
+
+      void syncTripsFromBackend();
+    };
+
+    refreshTrips();
+
+    const intervalId = window.setInterval(refreshTrips, TRIP_REFRESH_INTERVAL_MS);
+
+    const handleResume = () => refreshTrips();
+    window.addEventListener("focus", handleResume);
+    document.addEventListener("visibilitychange", handleResume);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleResume);
+      document.removeEventListener("visibilitychange", handleResume);
+    };
+  }, [authUser, isLoginPage]);
 
   function toggleThemeMode() {
     saveThemeMode(themeMode === "light" ? "dark" : "light");
