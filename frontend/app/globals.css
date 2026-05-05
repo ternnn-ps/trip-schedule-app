@@ -396,6 +396,10 @@ html[data-theme="dark"] .sidebar-shell {
   gap: 10px;
 }
 
+.calendar-mobile-agenda {
+  display: none;
+}
+
 .calendar-weekday {
   padding: 0 4px 2px;
   color: var(--muted);
@@ -461,6 +465,72 @@ html[data-theme="dark"] .sidebar-shell {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--panel);
+}
+
+.calendar-mobile-day {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.calendar-mobile-day.today {
+  border-color: rgba(37, 99, 235, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.1);
+}
+
+.calendar-mobile-date {
+  display: grid;
+  width: 64px;
+  flex: 0 0 64px;
+  padding: 8px 6px;
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.08);
+  text-align: center;
+}
+
+.calendar-mobile-date-number {
+  font-size: 1.15rem !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+}
+
+.calendar-mobile-date-label {
+  color: var(--muted);
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+}
+
+.calendar-mobile-trip {
+  justify-content: flex-start !important;
+  width: 100%;
+  min-width: 0 !important;
+  padding: 10px 12px !important;
+  border: 1px solid rgba(37, 99, 235, 0.16) !important;
+  border-radius: 8px !important;
+  background: rgba(37, 99, 235, 0.08) !important;
+  color: var(--foreground) !important;
+  text-align: left !important;
+  text-transform: none !important;
+}
+
+.calendar-mobile-trip-title {
+  overflow: hidden;
+  font-size: 0.88rem !important;
+  font-weight: 800 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-mobile-trip-meta {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.76rem !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .itinerary-actions {
@@ -668,6 +738,14 @@ html[data-theme="dark"] .map-preview {
     gap: 8px;
   }
 
+  .calendar-desktop-grid {
+    display: none;
+  }
+
+  .calendar-mobile-agenda {
+    display: block;
+  }
+
   .calendar-weekday {
     font-size: 0.72rem;
   }
@@ -680,6 +758,16 @@ html[data-theme="dark"] .map-preview {
   .calendar-upcoming-item {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .calendar-mobile-day {
+    flex-direction: column;
+  }
+
+  .calendar-mobile-date {
+    width: 100%;
+    justify-items: start;
+    text-align: left;
   }
 
   .plan-map-actions .MuiButton-root {
@@ -760,6 +848,14 @@ html[data-theme="dark"] .map-preview {
 }
 
 @media (min-width: 700px) {
+  .calendar-desktop-grid {
+    display: block;
+  }
+
+  .calendar-mobile-agenda {
+    display: none;
+  }
+
   .summary-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
