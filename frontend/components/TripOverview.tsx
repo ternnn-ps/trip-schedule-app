@@ -447,11 +447,11 @@ export default function TripOverview() {
             return (
             <Card
               key={trip.id}
-              className="travel-trip-card clickable-card"
-              onClick={() => openTrip(trip.id)}
-              onKeyDown={(event) => handleTripCardKeyDown(event, trip.id)}
-              role="button"
-              tabIndex={0}
+              className={tripCanView ? "travel-trip-card clickable-card" : "travel-trip-card"}
+              onClick={tripCanView ? () => openTrip(trip.id) : undefined}
+              onKeyDown={tripCanView ? (event) => handleTripCardKeyDown(event, trip.id) : undefined}
+              role={tripCanView ? "button" : undefined}
+              tabIndex={tripCanView ? 0 : -1}
             >
               <CardContent sx={{ p: 2.5 }}>
                 <Stack spacing={2}>
@@ -463,12 +463,20 @@ export default function TripOverview() {
                       <Typography sx={{ color: "var(--muted)" }}>{trip.destination}</Typography>
                     </Box>
                     <Stack direction="row" spacing={0.75} sx={{ alignItems: "flex-start" }}>
-                      <Chip
-                        icon={tripCanView ? undefined : <LockIcon />}
-                        label={tripCanView ? `${trip.plans.length} plans` : "Locked"}
-                        size="small"
-                        color={tripCanView ? "default" : "warning"}
-                      />
+                      {tripCanView ? (
+                        <Chip
+                          label={`${trip.plans.length} plans`}
+                          size="small"
+                        />
+                      ) : (
+                        <Box
+                          className="trip-lock-indicator"
+                          aria-label="Private trip"
+                          title="Private trip"
+                        >
+                          <LockIcon fontSize="inherit" />
+                        </Box>
+                      )}
                       {tripCanEdit ? (
                         <IconButton
                           aria-label={`Trip actions for ${trip.name}`}

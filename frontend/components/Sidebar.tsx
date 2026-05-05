@@ -10,6 +10,7 @@ import {
 } from "@/services/tripStore";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import AddIcon from "@mui/icons-material/Add";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -110,6 +111,15 @@ export default function Sidebar({
             className={pathname === "/" ? "sidebar-link active" : "sidebar-link"}
           >
             Overview
+          </Button>
+          <Button
+            component={Link}
+            href="/calendar"
+            onClick={onNavigate}
+            startIcon={<CalendarMonthIcon />}
+            className={pathname === "/calendar" ? "sidebar-link active" : "sidebar-link"}
+          >
+            Calendar
           </Button>
           <Button
             onClick={handleNewTrip}
