@@ -8,12 +8,14 @@ import {
   getTrips,
   getTripsServerSnapshot,
   removeUserFromTrip,
+  requestJoinTrip,
   subscribeTrips,
   syncTripsFromBackend,
   updatePlanInTrip,
   updateTrip,
 } from "@/services/tripStore";
 import {
+  getAuthDisplayName,
   getAuthUser,
   getAuthUserServerSnapshot,
   subscribeAuth,
@@ -21,12 +23,13 @@ import {
 import { formatDateRange, getTripDurationDays, parseTripDateRange } from "@/services/dateRange";
 import { downloadTripReport } from "@/services/tripPdf";
 import { getGoogleMapUrl, parseGoogleMapUrl } from "@/services/googleMaps";
-import { canEditTrip } from "@/services/tripPermissions";
+import { canEditTrip, canViewTrip, hasRequestedTripAccess, isTripHost } from "@/services/tripPermissions";
 import { UserService } from "@/services/UserService";
 import LocationPicker from "@/components/LocationPicker";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -524,6 +527,34 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
     );
   }
 
+  if (!canViewTrip(trip, authUser)) {
+    const requestSent = hasRequestedTripAccess(trip, authUser);
+
+    return (
+      <Box className="travel-empty-state">
+        <Typography variant="h5" sx={{ fontWeight: 900 }}>
+          Private trip
+        </Typography>
+        <Typography sx={{ color: "var(--muted)", mt: 0.75 }}>
+          Only invited users can see this itinerary. You can ask the host to add you.
+        </Typography>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} sx={{ mt: 2, justifyContent: "center" }}>
+          <Button
+            variant="contained"
+            className="travel-primary-button"
+            disabled={requestSent}
+            onClick={() => requestJoinTrip(trip.id, getAuthDisplayName(authUser))}
+          >
+            {requestSent ? "Request Sent" : "Request to Join"}
+          </Button>
+          <Button component={Link} href="/" variant="outlined" startIcon={<ArrowBackIcon />}>
+            Back to Overview
+          </Button>
+        </Stack>
+      </Box>
+    );
+  }
+
   const sortedPlans = [...trip.plans].sort(comparePlansByDayAndTime);
   const plansByDay = sortedPlans.reduce<Record<string, typeof trip.plans>>((groups, plan) => {
     groups[plan.day] = [...(groups[plan.day] ?? []), plan];
@@ -535,6 +566,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
     (_, index) => `Day ${index + 1}`,
   );
   const canEditCurrentTrip = canEditTrip(trip, authUser);
+  const canReviewJoinRequests = isTripHost(trip, authUser) || canEditCurrentTrip;
   const hasSelectedDayOutsideOptions = Boolean(form.day) && !dayOptions.includes(form.day);
   const usersAvailableToAdd = trip.allUsers
     ? []
@@ -637,6 +669,9 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                   : "Selected users can edit this trip."}
               </Typography>
               <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: "wrap" }}>
+                {trip.hostUserName ? (
+                  <Chip label={`Host: ${trip.hostUserName}`} color="primary" variant="outlined" />
+                ) : null}
                 {trip.allUsers ? (
                   <Chip label="All users" color="primary" variant="outlined" />
                 ) : trip.users.length > 0 ? (
@@ -654,6 +689,25 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                   <Chip label="No users yet" variant="outlined" />
                 )}
               </Stack>
+              {canReviewJoinRequests && !trip.allUsers && (trip.pendingUsers ?? []).length > 0 ? (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="caption" sx={{ color: "var(--muted)", fontWeight: 800 }}>
+                    Join requests
+                  </Typography>
+                  <Stack direction="row" spacing={1} sx={{ mt: 0.75, flexWrap: "wrap" }}>
+                    {(trip.pendingUsers ?? []).map((user) => (
+                      <Chip
+                        key={user}
+                        label={user}
+                        color="warning"
+                        variant="outlined"
+                        onDelete={() => addUserToTrip(trip.id, user)}
+                        deleteIcon={<CheckIcon />}
+                      />
+                    ))}
+                  </Stack>
+                </Box>
+              ) : null}
             </Box>
             <Stack className="trip-user-panel-actions">
               <Button

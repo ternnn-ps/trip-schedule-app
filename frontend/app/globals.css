@@ -364,6 +364,20 @@ html[data-theme="dark"] .sidebar-shell {
   text-transform: none !important;
 }
 
+.notification-fab {
+  position: fixed;
+  top: 18px;
+  right: 22px;
+  z-index: 20;
+}
+
+.notification-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-strong);
+  padding: 12px;
+}
+
 .itinerary-actions {
   width: auto;
 }
@@ -580,6 +594,10 @@ html[data-theme="dark"] .map-preview {
   .focus-strip .MuiButton-root,
   .travel-empty-state .MuiButton-root {
     width: 100%;
+  }
+
+  .notification-fab {
+    display: none;
   }
 }
 

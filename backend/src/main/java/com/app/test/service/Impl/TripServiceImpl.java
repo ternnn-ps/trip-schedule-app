@@ -9,6 +9,7 @@ import com.app.test.beans.dto.response.base.ResponseModelDto;
 import com.app.test.model.MsTrip;
 import com.app.test.model.MsTripPlan;
 import com.app.test.repository.MsTripRepository;
+import com.app.test.service.NotificationService;
 import com.app.test.service.TripService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,9 @@ public class TripServiceImpl implements TripService {
 
     @Autowired
     private MsTripRepository msTripRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Override
     public ResponseModelDto<PageResponse<TripResponse>> search(String keyword, int page, int size) {
@@ -90,8 +94,10 @@ public class TripServiceImpl implements TripService {
             entity.setDestination(request.getDestination());
             entity.setDateRange(request.getDateRange());
             entity.setNotes(request.getNotes());
+            entity.setHostUserName(resolveHostUserName(request));
             entity.setAllUsers(Boolean.TRUE.equals(request.getAllUsers()));
-            entity.setUsers(copyUsers(request.getUsers()));
+            entity.setUsers(mergeUsers(copyUsers(request.getUsers()), entity.getHostUserName()));
+            entity.setPendingUsers(copyUsers(request.getPendingUsers()));
             entity.setCreatedBy("Admin");
             entity.setCreatedDate(now);
             entity.setUpdatedBy("Admin");
@@ -126,8 +132,9 @@ public class TripServiceImpl implements TripService {
             entity.setDestination(request.getDestination());
             entity.setDateRange(request.getDateRange());
             entity.setNotes(request.getNotes());
+            entity.setHostUserName(resolveHostUserName(request, entity));
             entity.setAllUsers(Boolean.TRUE.equals(request.getAllUsers()));
-            entity.setUsers(copyUsers(request.getUsers()));
+            entity.setUsers(mergeUsers(copyUsers(request.getUsers()), entity.getHostUserName()));
             entity.setUpdatedBy("Admin");
             entity.setUpdatedDate(new Date());
 
@@ -176,10 +183,62 @@ public class TripServiceImpl implements TripService {
                 return new ResponseModelDto<>("Failed", "Trip not found", null, false);
             }
 
-            if (hasText(userName) && !entity.getUsers().contains(userName.trim())) {
-                entity.getUsers().add(userName.trim());
+            if (hasText(userName) && !containsIgnoreCase(getTripUsers(entity), userName.trim())) {
+                String normalizedUserName = userName.trim();
+                getTripUsers(entity).add(normalizedUserName);
+                getPendingUsers(entity).removeIf((pendingUser) -> pendingUser.equalsIgnoreCase(normalizedUserName));
                 entity.setUpdatedBy("Admin");
                 entity.setUpdatedDate(new Date());
+                notificationService.create(
+                        normalizedUserName,
+                        getTripHostUserName(entity),
+                        entity.getId(),
+                        entity.getName(),
+                        "TRIP_INVITE",
+                        getTripHostUserName(entity) + " invited you to " + entity.getName()
+                );
+            }
+
+            entity = msTripRepository.save(entity);
+
+            return new ResponseModelDto<>("Success", mapToResponse(entity), true);
+        } catch (Exception e) {
+            return new ResponseModelDto<>("Error", e.getMessage(), null, false);
+        }
+    }
+
+    @Override
+    public ResponseModelDto<TripResponse> requestJoin(String tripId, String userName) {
+
+        try {
+            MsTrip entity = findActiveTrip(tripId);
+
+            if (entity == null) {
+                return new ResponseModelDto<>("Failed", "Trip not found", null, false);
+            }
+
+            if (!hasText(userName)) {
+                return new ResponseModelDto<>("Failed", "User name is required", null, false);
+            }
+
+            String normalizedUserName = userName.trim();
+
+            if (Boolean.TRUE.equals(entity.getAllUsers()) || containsIgnoreCase(getTripUsers(entity), normalizedUserName)) {
+                return new ResponseModelDto<>("Success", mapToResponse(entity), true);
+            }
+
+            if (!containsIgnoreCase(getPendingUsers(entity), normalizedUserName)) {
+                getPendingUsers(entity).add(normalizedUserName);
+                entity.setUpdatedBy(normalizedUserName);
+                entity.setUpdatedDate(new Date());
+                notificationService.create(
+                        getTripHostUserName(entity),
+                        normalizedUserName,
+                        entity.getId(),
+                        entity.getName(),
+                        "TRIP_JOIN_REQUEST",
+                        normalizedUserName + " requested to join " + entity.getName()
+                );
             }
 
             entity = msTripRepository.save(entity);
@@ -271,7 +330,7 @@ public class TripServiceImpl implements TripService {
 
         MsTrip entity = msTripRepository.findById(id).orElse(null);
 
-        if (entity == null || entity.getRecordStatus() != 'A') {
+        if (entity == null || !Character.valueOf('A').equals(entity.getRecordStatus())) {
             return null;
         }
 
@@ -285,7 +344,7 @@ public class TripServiceImpl implements TripService {
 
         return trip.getPlans()
                 .stream()
-                .filter(plan -> plan.getId().equals(planId) && plan.getRecordStatus() == 'A')
+                .filter(plan -> plan.getId().equals(planId) && Character.valueOf('A').equals(plan.getRecordStatus()))
                 .findFirst()
                 .orElse(null);
     }
@@ -318,11 +377,13 @@ public class TripServiceImpl implements TripService {
         response.setDestination(entity.getDestination());
         response.setDateRange(entity.getDateRange());
         response.setNotes(entity.getNotes());
+        response.setHostUserName(getTripHostUserName(entity));
         response.setAllUsers(Boolean.TRUE.equals(entity.getAllUsers()));
-        response.setUsers(entity.getUsers() == null ? new ArrayList<>() : new ArrayList<>(entity.getUsers()));
+        response.setUsers(new ArrayList<>(getTripUsers(entity)));
+        response.setPendingUsers(new ArrayList<>(getPendingUsers(entity)));
         response.setPlans(entity.getPlans()
                 .stream()
-                .filter(plan -> plan.getRecordStatus() == 'A')
+                .filter(plan -> Character.valueOf('A').equals(plan.getRecordStatus()))
                 .map(this::mapPlanToResponse)
                 .collect(Collectors.toList()));
         return response;
@@ -349,8 +410,76 @@ public class TripServiceImpl implements TripService {
         return users.stream().filter(this::hasText).map(String::trim).distinct().collect(Collectors.toList());
     }
 
+    private List<String> mergeUsers(List<String> users, String hostUserName) {
+        List<String> mergedUsers = new ArrayList<>(users);
+
+        if (hasText(hostUserName) && !containsIgnoreCase(mergedUsers, hostUserName.trim())) {
+            mergedUsers.add(0, hostUserName.trim());
+        }
+
+        return mergedUsers.stream().filter(this::hasText).map(String::trim).distinct().collect(Collectors.toList());
+    }
+
+    private String resolveHostUserName(TripRequest request) {
+        if (hasText(request.getHostUserName())) {
+            return request.getHostUserName().trim();
+        }
+
+        List<String> users = copyUsers(request.getUsers());
+        return users.isEmpty() ? "Admin" : users.get(0);
+    }
+
+    private String resolveHostUserName(TripRequest request, MsTrip existingTrip) {
+        if (hasText(request.getHostUserName())) {
+            return request.getHostUserName().trim();
+        }
+
+        if (hasText(existingTrip.getHostUserName())) {
+            return existingTrip.getHostUserName().trim();
+        }
+
+        return getTripHostUserName(existingTrip);
+    }
+
+    private String getTripHostUserName(MsTrip entity) {
+        if (hasText(entity.getHostUserName())) {
+            return entity.getHostUserName().trim();
+        }
+
+        if (!getTripUsers(entity).isEmpty()) {
+            return getTripUsers(entity).get(0);
+        }
+
+        return hasText(entity.getCreatedBy()) ? entity.getCreatedBy().trim() : "Admin";
+    }
+
+    private boolean containsIgnoreCase(List<String> users, String userName) {
+        if (users == null || !hasText(userName)) {
+            return false;
+        }
+
+        String normalizedUserName = userName.trim().toLowerCase();
+        return users.stream().anyMatch((user) -> hasText(user) && user.trim().toLowerCase().equals(normalizedUserName));
+    }
+
     private String makeId(String prefix) {
         return prefix + "-" + UUID.randomUUID().toString();
+    }
+
+    private List<String> getPendingUsers(MsTrip entity) {
+        if (entity.getPendingUsers() == null) {
+            entity.setPendingUsers(new ArrayList<>());
+        }
+
+        return entity.getPendingUsers();
+    }
+
+    private List<String> getTripUsers(MsTrip entity) {
+        if (entity.getUsers() == null) {
+            entity.setUsers(new ArrayList<>());
+        }
+
+        return entity.getUsers();
     }
 
     private boolean hasText(String value) {

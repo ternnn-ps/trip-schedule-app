@@ -16,7 +16,9 @@ const starterTrips: Trip[] = [
     dateRange: "14 Apr - 18 Apr 2026",
     notes: "Mix quiet mornings with food stops and easy transit between neighborhoods.",
     allUsers: false,
+    hostUserName: "Mina",
     users: ["Mina", "Alex"],
+    pendingUsers: [],
     plans: [
       {
         id: "kyoto-plan-1",
@@ -50,7 +52,9 @@ const starterTrips: Trip[] = [
     dateRange: "02 May - 04 May 2026",
     notes: "Keep this one flexible with river travel, one market night, and a slow final morning.",
     allUsers: false,
+    hostUserName: "Pacha",
     users: ["Pacha"],
+    pendingUsers: [],
     plans: [
       {
         id: "bangkok-plan-1",
@@ -96,8 +100,10 @@ function setCache(trips: Trip[], raw: string) {
 function normalizeTrip(trip: Trip): Trip {
   return {
     ...trip,
+    hostUserName: trip.hostUserName ?? trip.users?.[0] ?? "",
     allUsers: Boolean(trip.allUsers),
     users: Array.isArray(trip.users) ? trip.users : [],
+    pendingUsers: Array.isArray(trip.pendingUsers) ? trip.pendingUsers : [],
     plans: Array.isArray(trip.plans)
       ? trip.plans.map((plan) => ({
           ...plan,
@@ -285,6 +291,7 @@ export function addUserToTrip(tripId: string, userName: string) {
     return {
       ...trip,
       users: [...trip.users, normalizedName],
+      pendingUsers: (trip.pendingUsers ?? []).filter((pendingUser) => pendingUser !== normalizedName),
     };
   });
 
@@ -293,6 +300,39 @@ export function addUserToTrip(tripId: string, userName: string) {
 
   if (updatedTrip) {
     syncTripChange("add user", () => tripService.addUser(tripId, normalizedName));
+  }
+
+  return updatedTrip;
+}
+
+export function requestJoinTrip(tripId: string, userName: string) {
+  const normalizedName = userName.trim();
+
+  if (!normalizedName) {
+    return getTrips().find((trip) => trip.id === tripId) ?? null;
+  }
+
+  const updatedTrips = getTrips().map((trip) => {
+    if (
+      trip.id !== tripId ||
+      trip.allUsers ||
+      trip.users.includes(normalizedName) ||
+      (trip.pendingUsers ?? []).includes(normalizedName)
+    ) {
+      return trip;
+    }
+
+    return {
+      ...trip,
+      pendingUsers: [...(trip.pendingUsers ?? []), normalizedName],
+    };
+  });
+
+  saveTrips(updatedTrips);
+  const updatedTrip = updatedTrips.find((trip) => trip.id === tripId) ?? null;
+
+  if (updatedTrip) {
+    syncTripChange("request join", () => tripService.requestJoin(tripId, normalizedName));
   }
 
   return updatedTrip;

@@ -6,4 +6,5 @@ import lombok.Data;
 public class TripUserRequest {
 
     private String userName;
+    private String actorUserName;
 }

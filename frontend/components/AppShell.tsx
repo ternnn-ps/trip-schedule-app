@@ -2,17 +2,22 @@
 
 import Sidebar from "@/components/Sidebar";
 import {
+  getAuthDisplayName,
   getAuthUser,
   getAuthUserServerSnapshot,
   logoutUser,
   subscribeAuth,
 } from "@/services/authStore";
+import { NotificationService } from "@/services/NotificationService";
 import { syncTripsFromBackend } from "@/services/tripStore";
+import { AppNotification } from "@/types/notification";
 import CloseIcon from "@mui/icons-material/Close";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import MenuIcon from "@mui/icons-material/Menu";
+import NotificationsIcon from "@mui/icons-material/Notifications";
 import {
+  Badge,
   Box,
   Button,
   Dialog,
@@ -21,6 +26,7 @@ import {
   DialogTitle,
   Drawer,
   IconButton,
+  Stack,
   ThemeProvider,
   Typography,
   createTheme,
@@ -32,6 +38,7 @@ export type ThemeMode = "light" | "dark";
 
 const THEME_STORAGE_KEY = "travel-schedule-theme";
 const THEME_UPDATED_EVENT = "travel-theme-updated";
+const notificationService = new NotificationService();
 const configuredTripRefreshInterval = Number(process.env.NEXT_PUBLIC_TRIP_REFRESH_INTERVAL_MS);
 const TRIP_REFRESH_INTERVAL_MS = Number.isFinite(configuredTripRefreshInterval)
   ? Math.max(15_000, configuredTripRefreshInterval)
@@ -117,9 +124,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const themeMode = useSyncExternalStore(subscribeTheme, getInitialTheme, getThemeServerSnapshot);
   const authUser = useSyncExternalStore(subscribeAuth, getAuthUser, getAuthUserServerSnapshot);
   const isLoginPage = pathname === "/login";
+  const authDisplayName = getAuthDisplayName(authUser);
+  const unreadNotificationCount = notifications.filter((notification) => !notification.readFlag).length;
 
   useEffect(() => {
     document.documentElement.dataset.theme = themeMode;
@@ -164,6 +175,50 @@ export default function AppShell({ children }: { children: ReactNode }) {
     };
   }, [authUser, isLoginPage]);
 
+  useEffect(() => {
+    if (!authUser || isLoginPage) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function refreshNotifications() {
+      try {
+        const response = await notificationService.list(authDisplayName);
+
+        if (!cancelled && response?.result) {
+          setNotifications(response.body ?? []);
+        }
+      } catch (error) {
+        console.error("Failed to refresh notifications:", error);
+      }
+    }
+
+    void refreshNotifications();
+    const intervalId = window.setInterval(refreshNotifications, TRIP_REFRESH_INTERVAL_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [authDisplayName, authUser, isLoginPage]);
+
+  async function markAllNotificationsRead() {
+    if (!authUser) {
+      return;
+    }
+
+    try {
+      const response = await notificationService.markAllRead(authDisplayName);
+
+      if (response?.result) {
+        setNotifications(response.body ?? []);
+      }
+    } catch (error) {
+      console.error("Failed to mark notifications read:", error);
+    }
+  }
+
   function toggleThemeMode() {
     saveThemeMode(themeMode === "light" ? "dark" : "light");
   }
@@ -176,6 +231,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     logoutUser();
     setDrawerOpen(false);
     setLogoutDialogOpen(false);
+    setNotifications([]);
     router.replace("/login");
   }
 
@@ -186,6 +242,18 @@ export default function AppShell({ children }: { children: ReactNode }) {
       className="theme-toggle-button"
     >
       {themeMode === "light" ? <DarkModeIcon /> : <LightModeIcon />}
+    </IconButton>
+  );
+
+  const renderNotificationButton = () => (
+    <IconButton
+      aria-label="Open notifications"
+      onClick={() => setNotificationsOpen(true)}
+      className="theme-toggle-button"
+    >
+      <Badge badgeContent={unreadNotificationCount} color="error">
+        <NotificationsIcon />
+      </Badge>
     </IconButton>
   );
 
@@ -217,8 +285,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
             <MenuIcon />
           </IconButton>
           <Typography sx={{ fontWeight: 800 }}>Trip Schedule</Typography>
-          <Box sx={{ ml: "auto" }}>{themeToggle}</Box>
+          <Stack direction="row" spacing={1} sx={{ ml: "auto" }}>
+            {renderNotificationButton()}
+            {themeToggle}
+          </Stack>
         </Box>
+
+        <Box className="notification-fab">{renderNotificationButton()}</Box>
 
         <Box className="desktop-sidebar">
           <Sidebar
@@ -286,6 +359,40 @@ export default function AppShell({ children }: { children: ReactNode }) {
               Logout
             </Button>
           </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={notificationsOpen}
+          onClose={() => setNotificationsOpen(false)}
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontWeight: 900 }}>
+            Notifications
+            <Button onClick={markAllNotificationsRead} disabled={unreadNotificationCount === 0}>
+              Mark all read
+            </Button>
+          </DialogTitle>
+          <DialogContent>
+            <Stack spacing={1.25}>
+              {notifications.length > 0 ? (
+                notifications.map((notification) => (
+                  <Box key={notification.id} className="notification-item">
+                    <Typography sx={{ fontWeight: notification.readFlag ? 700 : 950 }}>
+                      {notification.message || notification.tripName || "Trip update"}
+                    </Typography>
+                    <Typography sx={{ color: "var(--muted)", fontSize: "0.84rem" }}>
+                      {notification.createdDate ? new Date(notification.createdDate).toLocaleString() : ""}
+                    </Typography>
+                  </Box>
+                ))
+              ) : (
+                <Typography sx={{ color: "var(--muted)" }}>
+                  No notifications yet.
+                </Typography>
+              )}
+            </Stack>
+          </DialogContent>
         </Dialog>
       </div>
       )}

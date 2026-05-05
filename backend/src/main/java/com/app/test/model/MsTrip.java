@@ -24,6 +24,8 @@ public class MsTrip {
     @Column(length = 2000)
     private String notes;
 
+    private String hostUserName;
+
     private Boolean allUsers = false;
 
     @ElementCollection(fetch = FetchType.EAGER)
@@ -31,6 +33,12 @@ public class MsTrip {
     @OrderColumn(name = "sort_order")
     @Column(name = "user_name")
     private List<String> users = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "MS_TRIP_PENDING_USER", joinColumns = @JoinColumn(name = "trip_id"))
+    @OrderColumn(name = "sort_order")
+    @Column(name = "user_name")
+    private List<String> pendingUsers = new ArrayList<>();
 
     @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderBy("createdDate ASC")

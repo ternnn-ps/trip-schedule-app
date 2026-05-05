@@ -20,6 +20,8 @@ public interface TripService {
 
     ResponseModelDto<TripResponse> addUser(String tripId, String userName);
 
+    ResponseModelDto<TripResponse> requestJoin(String tripId, String userName);
+
     ResponseModelDto<TripResponse> addPlan(String tripId, TripPlanRequest request);
 
     ResponseModelDto<TripResponse> updatePlan(String tripId, String planId, TripPlanRequest request);

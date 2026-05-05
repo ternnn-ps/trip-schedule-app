@@ -64,6 +64,14 @@ public class TripController {
         return ResponseEntity.ok(tripService.addUser(tripId, request.getUserName()));
     }
 
+    @PostMapping("/{tripId}/join-requests")
+    public ResponseEntity<Object> requestJoin(@PathVariable String tripId, @RequestBody TripUserRequest request) {
+        log.info("Controller : request Trip join");
+        log.debug(request.toString());
+
+        return ResponseEntity.ok(tripService.requestJoin(tripId, request.getUserName()));
+    }
+
     @PostMapping("/{tripId}/plans")
     public ResponseEntity<Object> addPlan(@PathVariable String tripId, @RequestBody TripPlanRequest request) {
         log.info("Controller : add Trip Plan");

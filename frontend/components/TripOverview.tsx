@@ -6,6 +6,7 @@ import {
   getTrips,
   getTripsServerSnapshot,
   OPEN_CREATE_TRIP_EVENT,
+  requestJoinTrip,
   syncTripsFromBackend,
   subscribeTrips,
   updateTrip,
@@ -18,7 +19,7 @@ import {
   getAuthUserServerSnapshot,
   subscribeAuth,
 } from "@/services/authStore";
-import { canEditTrip } from "@/services/tripPermissions";
+import { canEditTrip, canViewTrip, hasRequestedTripAccess, isTripHost } from "@/services/tripPermissions";
 import AddIcon from "@mui/icons-material/Add";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -26,6 +27,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import RouteIcon from "@mui/icons-material/Route";
+import LockIcon from "@mui/icons-material/Lock";
 import {
   Alert,
   Autocomplete,
@@ -183,6 +185,12 @@ export default function TripOverview() {
   }, []);
 
   function openTrip(tripId: string) {
+    const trip = trips.find((item) => item.id === tripId);
+
+    if (!trip || !canViewTrip(trip, authUser)) {
+      return;
+    }
+
     router.push(`/trip/${tripId}`);
   }
 
@@ -212,8 +220,10 @@ export default function TripOverview() {
       name: form.name.trim(),
       destination: form.destination.trim(),
       dateRange: formatDateRange(form.startDate, form.endDate),
+      hostUserName: getAuthDisplayName(authUser),
       allUsers: form.allUsers,
       users: selectedUsers,
+      pendingUsers: [],
       notes: form.notes.trim(),
     });
 
@@ -267,6 +277,7 @@ export default function TripOverview() {
       name: editForm.name.trim(),
       destination: editForm.destination.trim(),
       dateRange: formatDateRange(editForm.startDate, editForm.endDate),
+      hostUserName: editingTrip.hostUserName || getAuthDisplayName(authUser),
       allUsers: editForm.allUsers,
       users: selectedUsers,
       notes: editForm.notes.trim(),
@@ -298,6 +309,10 @@ export default function TripOverview() {
 
     deleteTrip(tripToDelete.id);
     setTripToDelete(null);
+  }
+
+  function handleRequestJoinTrip(trip: Trip) {
+    requestJoinTrip(trip.id, getAuthDisplayName(authUser));
   }
 
   const totalPlans = trips.reduce((sum, trip) => sum + trip.plans.length, 0);
@@ -424,7 +439,12 @@ export default function TripOverview() {
         </Box>
 
         <Box className="trip-grid">
-          {trips.map((trip) => (
+          {trips.map((trip) => {
+            const tripCanView = canViewTrip(trip, authUser);
+            const tripCanEdit = canEditTrip(trip, authUser);
+            const tripRequested = hasRequestedTripAccess(trip, authUser);
+
+            return (
             <Card
               key={trip.id}
               className="travel-trip-card clickable-card"
@@ -443,8 +463,13 @@ export default function TripOverview() {
                       <Typography sx={{ color: "var(--muted)" }}>{trip.destination}</Typography>
                     </Box>
                     <Stack direction="row" spacing={0.75} sx={{ alignItems: "flex-start" }}>
-                      <Chip label={`${trip.plans.length} plans`} size="small" />
-                      {canEditTrip(trip, authUser) ? (
+                      <Chip
+                        icon={tripCanView ? undefined : <LockIcon />}
+                        label={tripCanView ? `${trip.plans.length} plans` : "Locked"}
+                        size="small"
+                        color={tripCanView ? "default" : "warning"}
+                      />
+                      {tripCanEdit ? (
                         <IconButton
                           aria-label={`Trip actions for ${trip.name}`}
                           size="small"
@@ -474,7 +499,7 @@ export default function TripOverview() {
                         Next stop
                       </Typography>
                       <Typography sx={{ fontWeight: 800 }}>
-                        {trip.plans[0]?.place ?? "No stops yet"}
+                        {tripCanView ? trip.plans[0]?.place ?? "No stops yet" : "Request access"}
                       </Typography>
                     </Box>
                   </Box>
@@ -492,26 +517,46 @@ export default function TripOverview() {
                     {trip.users.length > 4 ? (
                       <Chip label={`+${trip.users.length - 4}`} size="small" />
                     ) : null}
+                    {isTripHost(trip, authUser) && (trip.pendingUsers ?? []).length > 0 ? (
+                      <Chip label={`${trip.pendingUsers?.length ?? 0} requests`} size="small" color="warning" />
+                    ) : null}
                   </Stack>
 
                   <Typography className="trip-note">
-                    {trip.notes || "Open this trip to start planning the schedule."}
+                    {tripCanView
+                      ? trip.notes || "Open this trip to start planning the schedule."
+                      : `This trip is private. Host: ${trip.hostUserName || trip.users[0] || "Unknown"}.`}
                   </Typography>
 
-                  <Button
-                    component={Link}
-                    href={`/trip/${trip.id}`}
-                    variant="contained"
-                    className="travel-primary-button"
-                    sx={{ width: { xs: "100%", sm: "auto" } }}
-                    onClick={(event) => event.stopPropagation()}
-                  >
-                    Open Trip
-                  </Button>
+                  {tripCanView ? (
+                    <Button
+                      component={Link}
+                      href={`/trip/${trip.id}`}
+                      variant="contained"
+                      className="travel-primary-button"
+                      sx={{ width: { xs: "100%", sm: "auto" } }}
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      Open Trip
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outlined"
+                      sx={{ width: { xs: "100%", sm: "auto" } }}
+                      disabled={tripRequested}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleRequestJoinTrip(trip);
+                      }}
+                    >
+                      {tripRequested ? "Request Sent" : "Request to Join"}
+                    </Button>
+                  )}
                 </Stack>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </Box>
 
         {trips.length === 0 ? (

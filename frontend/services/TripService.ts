@@ -12,6 +12,7 @@ export const TRIP_API_PATH = {
   update: "/trip/update",
   delete: "/trip/delete",
   addUser: (tripId: string) => `/trip/${tripId}/users`,
+  requestJoin: (tripId: string) => `/trip/${tripId}/join-requests`,
   addPlan: (tripId: string) => `/trip/${tripId}/plans`,
   updatePlan: (tripId: string, planId: string) => `/trip/${tripId}/plans/${planId}`,
   deletePlan: (tripId: string, planId: string) => `/trip/${tripId}/plans/${planId}/delete`,
@@ -70,6 +71,15 @@ export class TripService {
   async addUser(tripId: string, userName: string): Promise<ResponseModel<Trip> | undefined> {
     const response = await axios.post(
       `${BASE_URL}${TRIP_API_PATH.addUser(tripId)}`,
+      { userName },
+      { timeout: API_TIMEOUT_MS },
+    );
+    return response.data;
+  }
+
+  async requestJoin(tripId: string, userName: string): Promise<ResponseModel<Trip> | undefined> {
+    const response = await axios.post(
+      `${BASE_URL}${TRIP_API_PATH.requestJoin(tripId)}`,
       { userName },
       { timeout: API_TIMEOUT_MS },
     );

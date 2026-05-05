@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS ms_trip (
     destination varchar(255),
     date_range varchar(255),
     notes varchar(2000),
+    host_user_name varchar(255),
     all_users boolean DEFAULT false,
     created_by varchar(255),
     created_date timestamp,
@@ -76,6 +77,30 @@ CREATE TABLE IF NOT EXISTS ms_trip_user (
         ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS ms_trip_pending_user (
+    trip_id varchar(255) NOT NULL,
+    sort_order integer NOT NULL,
+    user_name varchar(255),
+    CONSTRAINT pk_ms_trip_pending_user PRIMARY KEY (trip_id, sort_order),
+    CONSTRAINT fk_ms_trip_pending_user_trip
+        FOREIGN KEY (trip_id)
+        REFERENCES ms_trip (id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS ms_notification (
+    id varchar(255) PRIMARY KEY,
+    recipient_user_name varchar(255),
+    actor_user_name varchar(255),
+    trip_id varchar(255),
+    trip_name varchar(255),
+    type varchar(255),
+    message varchar(255),
+    read_flag boolean DEFAULT false,
+    created_date timestamp,
+    record_status char(1) DEFAULT 'A'
+);
+
 CREATE INDEX IF NOT EXISTS idx_ms_user_record_status
     ON ms_user (record_status);
 
@@ -97,12 +122,19 @@ CREATE INDEX IF NOT EXISTS idx_ms_trip_plan_trip_id
 CREATE INDEX IF NOT EXISTS idx_ms_trip_user_trip_id
     ON ms_trip_user (trip_id);
 
+CREATE INDEX IF NOT EXISTS idx_ms_trip_pending_user_trip_id
+    ON ms_trip_pending_user (trip_id);
+
+CREATE INDEX IF NOT EXISTS idx_ms_notification_recipient_status
+    ON ms_notification (recipient_user_name, record_status);
+
 ALTER TABLE ms_user ALTER COLUMN record_status SET DEFAULT 'A';
 ALTER TABLE ms_customer ALTER COLUMN record_status SET DEFAULT 'A';
 ALTER TABLE ms_trip ALTER COLUMN record_status SET DEFAULT 'A';
 ALTER TABLE ms_trip_plan ALTER COLUMN record_status SET DEFAULT 'A';
 
 ALTER TABLE ms_trip ADD COLUMN IF NOT EXISTS all_users boolean DEFAULT false;
+ALTER TABLE ms_trip ADD COLUMN IF NOT EXISTS host_user_name varchar(255);
 ALTER TABLE ms_trip_plan ADD COLUMN IF NOT EXISTS google_map_url varchar(1000);
 ALTER TABLE ms_user ADD COLUMN IF NOT EXISTS last_latitude double precision;
 ALTER TABLE ms_user ADD COLUMN IF NOT EXISTS last_longitude double precision;
