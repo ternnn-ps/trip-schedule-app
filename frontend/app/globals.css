@@ -390,14 +390,14 @@ html[data-theme="dark"] .sidebar-shell {
   place-items: center;
 }
 
+.trip-calendar-page {
+  min-height: 0;
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 10px;
-}
-
-.calendar-mobile-agenda {
-  display: none;
 }
 
 .calendar-weekday {
@@ -429,6 +429,28 @@ html[data-theme="dark"] .sidebar-shell {
 .calendar-day-number {
   font-size: 0.9rem !important;
   font-weight: 900 !important;
+}
+
+.calendar-day-indicator-row {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  min-height: 14px;
+  margin-top: 6px;
+}
+
+.calendar-day-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.calendar-day-count {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
 }
 
 .calendar-trip-pill {
@@ -465,72 +487,6 @@ html[data-theme="dark"] .sidebar-shell {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--panel);
-}
-
-.calendar-mobile-day {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--panel);
-}
-
-.calendar-mobile-day.today {
-  border-color: rgba(37, 99, 235, 0.28);
-  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.1);
-}
-
-.calendar-mobile-date {
-  display: grid;
-  width: 64px;
-  flex: 0 0 64px;
-  padding: 8px 6px;
-  border-radius: 8px;
-  background: rgba(37, 99, 235, 0.08);
-  text-align: center;
-}
-
-.calendar-mobile-date-number {
-  font-size: 1.15rem !important;
-  font-weight: 900 !important;
-  line-height: 1.1 !important;
-}
-
-.calendar-mobile-date-label {
-  color: var(--muted);
-  font-size: 0.74rem !important;
-  font-weight: 700 !important;
-}
-
-.calendar-mobile-trip {
-  justify-content: flex-start !important;
-  width: 100%;
-  min-width: 0 !important;
-  padding: 10px 12px !important;
-  border: 1px solid rgba(37, 99, 235, 0.16) !important;
-  border-radius: 8px !important;
-  background: rgba(37, 99, 235, 0.08) !important;
-  color: var(--foreground) !important;
-  text-align: left !important;
-  text-transform: none !important;
-}
-
-.calendar-mobile-trip-title {
-  overflow: hidden;
-  font-size: 0.88rem !important;
-  font-weight: 800 !important;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.calendar-mobile-trip-meta {
-  overflow: hidden;
-  color: var(--muted);
-  font-size: 0.76rem !important;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .itinerary-actions {
@@ -711,6 +667,38 @@ html[data-theme="dark"] .map-preview {
 }
 
 @media (max-width: 699px) {
+  .trip-calendar-page {
+    gap: 12px;
+  }
+
+  .calendar-page-heading {
+    gap: 8px;
+  }
+
+  .calendar-page-copy {
+    display: none;
+  }
+
+  .calendar-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .calendar-summary-grid .MuiCardContent-root {
+    padding: 12px !important;
+  }
+
+  .calendar-panel .MuiCardContent-root {
+    padding: 12px !important;
+  }
+
+  .calendar-toolbar .MuiButton-root {
+    min-height: 34px;
+  }
+
+  .calendar-month-label {
+    font-size: 1rem !important;
+  }
+
   .section-heading > .MuiStack-root {
     width: 100%;
     justify-content: space-between;
@@ -738,36 +726,21 @@ html[data-theme="dark"] .map-preview {
     gap: 8px;
   }
 
-  .calendar-desktop-grid {
-    display: none;
-  }
-
-  .calendar-mobile-agenda {
-    display: block;
-  }
-
   .calendar-weekday {
     font-size: 0.72rem;
   }
 
   .calendar-day-card {
-    min-height: 102px;
-    padding: 8px;
+    min-height: 52px;
+    padding: 6px 5px;
   }
 
-  .calendar-upcoming-item {
-    flex-direction: column;
-    align-items: flex-start;
+  .calendar-day-number {
+    font-size: 0.78rem !important;
   }
 
-  .calendar-mobile-day {
-    flex-direction: column;
-  }
-
-  .calendar-mobile-date {
-    width: 100%;
-    justify-items: start;
-    text-align: left;
+  .calendar-day-indicator-row {
+    display: flex;
   }
 
   .plan-map-actions .MuiButton-root {
@@ -788,6 +761,14 @@ html[data-theme="dark"] .map-preview {
   }
 
   .notification-fab {
+    display: none;
+  }
+
+  .calendar-day-trip-list {
+    display: none !important;
+  }
+
+  .calendar-upcoming-panel {
     display: none;
   }
 }
@@ -848,14 +829,6 @@ html[data-theme="dark"] .map-preview {
 }
 
 @media (min-width: 700px) {
-  .calendar-desktop-grid {
-    display: block;
-  }
-
-  .calendar-mobile-agenda {
-    display: none;
-  }
-
   .summary-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -892,6 +865,10 @@ html[data-theme="dark"] .map-preview {
 
   .calendar-upcoming-item {
     align-items: center;
+  }
+
+  .calendar-day-indicator-row {
+    display: none;
   }
 }
 

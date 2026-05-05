@@ -133,35 +133,27 @@ export default function TripCalendar() {
     trip.startDateValue <= addDays(addMonths(displayMonth, 1), -1)
       && trip.endDateValue >= startOfMonth(displayMonth)
   ));
-  const daysWithTripsThisMonth = days
-    .filter((day) => isSameMonth(day, displayMonth))
-    .map((day) => ({
-      day,
-      trips: tripsThisMonth.filter((trip) => trip.startDateValue <= day && trip.endDateValue >= day),
-    }))
-    .filter(({ trips }) => trips.length > 0);
-
   function openTrip(tripId: string) {
     router.push(`/trip/${tripId}`);
   }
 
   return (
-    <Stack spacing={3}>
-      <Box className="page-heading">
+    <Stack spacing={{ xs: 2, sm: 3 }} className="trip-calendar-page">
+      <Box className="page-heading calendar-page-heading">
         <Box>
           <Typography variant="overline" sx={{ color: "var(--muted)", fontWeight: 800 }}>
             Calendar
           </Typography>
-          <Typography variant="h4" sx={{ fontWeight: 900, mt: 0.5 }}>
+          <Typography variant="h4" sx={{ fontWeight: 900, mt: 0.5, fontSize: { xs: "1.65rem", sm: "2.125rem" } }}>
             Upcoming trips
           </Typography>
-          <Typography sx={{ color: "var(--muted)", mt: 0.75 }}>
+          <Typography className="calendar-page-copy" sx={{ color: "var(--muted)", mt: 0.75 }}>
             Keep an eye on what is coming next and where each trip lands on the month view.
           </Typography>
         </Box>
       </Box>
 
-      <Box className="summary-grid">
+      <Box className="summary-grid calendar-summary-grid">
         <Card className="travel-stat-card">
           <CardContent>
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
@@ -195,26 +187,29 @@ export default function TripCalendar() {
         </Card>
       </Box>
 
-      <Card className="travel-panel">
+      <Card className="travel-panel calendar-panel">
         <CardContent sx={{ p: 2.5 }}>
           <Stack spacing={2.5}>
             <Stack
+              className="calendar-toolbar"
               direction={{ xs: "column", sm: "row" }}
               spacing={1}
               sx={{ alignItems: { xs: "stretch", sm: "center" }, justifyContent: "space-between" }}
             >
               <Button
                 variant="outlined"
+                size="small"
                 startIcon={<ChevronLeftIcon />}
                 onClick={() => setDisplayMonth((currentMonth) => addMonths(currentMonth, -1))}
               >
                 Previous
               </Button>
-              <Typography variant="h6" sx={{ fontWeight: 900, textAlign: "center" }}>
+              <Typography variant="h6" className="calendar-month-label" sx={{ fontWeight: 900, textAlign: "center" }}>
                 {formatMonthLabel(displayMonth)}
               </Typography>
               <Button
                 variant="outlined"
+                size="small"
                 endIcon={<ChevronRightIcon />}
                 onClick={() => setDisplayMonth((currentMonth) => addMonths(currentMonth, 1))}
               >
@@ -243,7 +238,17 @@ export default function TripCalendar() {
                       <Typography className="calendar-day-number">
                         {day.getDate()}
                       </Typography>
-                      <Stack spacing={0.5} sx={{ mt: 1 }}>
+                      <Box className="calendar-day-indicator-row">
+                        {dayTrips.slice(0, 3).map((trip) => (
+                          <span key={`${trip.id}-${day.toISOString()}-dot`} className="calendar-day-dot" />
+                        ))}
+                        {dayTrips.length > 0 ? (
+                          <Typography className="calendar-day-count">
+                            {dayTrips.length}
+                          </Typography>
+                        ) : null}
+                      </Box>
+                      <Stack spacing={0.5} sx={{ mt: 1 }} className="calendar-day-trip-list">
                         {dayTrips.slice(0, 2).map((trip) => (
                           <Button
                             key={`${trip.id}-${day.toISOString()}`}
@@ -264,60 +269,11 @@ export default function TripCalendar() {
                 })}
               </Box>
             </Box>
-
-            <Box className="calendar-mobile-agenda">
-              {daysWithTripsThisMonth.length > 0 ? (
-                <Stack spacing={1}>
-                  {daysWithTripsThisMonth.map(({ day, trips }) => (
-                    <Box
-                      key={day.toISOString()}
-                      className={`calendar-mobile-day${isSameDay(day, today) ? " today" : ""}`}
-                    >
-                      <Box className="calendar-mobile-date">
-                        <Typography className="calendar-mobile-date-number">
-                          {day.getDate()}
-                        </Typography>
-                        <Typography className="calendar-mobile-date-label">
-                          {new Intl.DateTimeFormat("en", { weekday: "short", month: "short" }).format(day)}
-                        </Typography>
-                      </Box>
-                      <Stack spacing={0.75} sx={{ minWidth: 0, flex: 1 }}>
-                        {trips.map((trip) => (
-                          <Button
-                            key={`${trip.id}-${day.toISOString()}-mobile`}
-                            onClick={() => openTrip(trip.id)}
-                            className="calendar-mobile-trip"
-                          >
-                            <Box sx={{ minWidth: 0 }}>
-                              <Typography className="calendar-mobile-trip-title">
-                                {trip.name}
-                              </Typography>
-                              <Typography className="calendar-mobile-trip-meta">
-                                {trip.destination}
-                              </Typography>
-                            </Box>
-                          </Button>
-                        ))}
-                      </Stack>
-                    </Box>
-                  ))}
-                </Stack>
-              ) : (
-                <Box className="travel-empty-state">
-                  <Typography sx={{ fontWeight: 900 }}>
-                    No trips in this month
-                  </Typography>
-                  <Typography sx={{ color: "var(--muted)", mt: 0.75 }}>
-                    Move to another month to browse the next scheduled trips.
-                  </Typography>
-                </Box>
-              )}
-            </Box>
           </Stack>
         </CardContent>
       </Card>
 
-      <Card className="travel-panel">
+      <Card className="travel-panel calendar-upcoming-panel">
         <CardContent sx={{ p: 2.5 }}>
           <Stack spacing={2}>
             <Box className="section-heading">
