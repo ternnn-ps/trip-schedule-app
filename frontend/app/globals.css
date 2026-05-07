@@ -376,6 +376,21 @@ html[data-theme="dark"] .sidebar-shell {
   border-radius: 8px;
   background: var(--panel-strong);
   padding: 12px;
+  transition: border-color 140ms ease, background 140ms ease, opacity 140ms ease;
+}
+
+.notification-item.unread {
+  border-color: rgba(37, 99, 235, 0.28);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.notification-item.read {
+  opacity: 0.78;
+}
+
+.notification-item:hover {
+  border-color: rgba(37, 99, 235, 0.24);
+  background: var(--panel);
 }
 
 .trip-lock-indicator {

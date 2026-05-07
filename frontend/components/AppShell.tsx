@@ -43,6 +43,7 @@ const configuredTripRefreshInterval = Number(process.env.NEXT_PUBLIC_TRIP_REFRES
 const TRIP_REFRESH_INTERVAL_MS = Number.isFinite(configuredTripRefreshInterval)
   ? Math.max(15_000, configuredTripRefreshInterval)
   : 45_000;
+const READ_NOTIFICATION_VISIBLE_MS = 24 * 60 * 60 * 1000;
 
 const lightTheme = createTheme({
   palette: {
@@ -119,6 +120,20 @@ function saveThemeMode(themeMode: ThemeMode) {
   window.dispatchEvent(new Event(THEME_UPDATED_EVENT));
 }
 
+function shouldShowNotification(notification: AppNotification) {
+  if (!notification.readFlag) {
+    return true;
+  }
+
+  const createdAt = new Date(notification.createdDate).getTime();
+
+  if (Number.isNaN(createdAt)) {
+    return true;
+  }
+
+  return Date.now() - createdAt <= READ_NOTIFICATION_VISIBLE_MS;
+}
+
 export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -130,6 +145,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const authUser = useSyncExternalStore(subscribeAuth, getAuthUser, getAuthUserServerSnapshot);
   const isLoginPage = pathname === "/login";
   const authDisplayName = getAuthDisplayName(authUser);
+  const visibleNotifications = notifications.filter(shouldShowNotification);
   const unreadNotificationCount = notifications.filter((notification) => !notification.readFlag).length;
 
   useEffect(() => {
@@ -208,6 +224,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
       return;
     }
 
+    setNotifications((currentNotifications) => (
+      currentNotifications.map((notification) => ({
+        ...notification,
+        readFlag: true,
+      }))
+    ));
+
     try {
       const response = await notificationService.markAllRead(authDisplayName);
 
@@ -217,6 +240,20 @@ export default function AppShell({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Failed to mark notifications read:", error);
     }
+  }
+
+  function handleOpenNotifications() {
+    setNotificationsOpen(true);
+    void markAllNotificationsRead();
+  }
+
+  function openNotification(notification: AppNotification) {
+    if (!notification.tripId) {
+      return;
+    }
+
+    setNotificationsOpen(false);
+    router.push(`/trip/${notification.tripId}`);
   }
 
   function toggleThemeMode() {
@@ -248,7 +285,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const renderNotificationButton = () => (
     <IconButton
       aria-label="Open notifications"
-      onClick={() => setNotificationsOpen(true)}
+      onClick={handleOpenNotifications}
       className="theme-toggle-button"
     >
       <Badge badgeContent={unreadNotificationCount} color="error">
@@ -375,9 +412,21 @@ export default function AppShell({ children }: { children: ReactNode }) {
           </DialogTitle>
           <DialogContent>
             <Stack spacing={1.25}>
-              {notifications.length > 0 ? (
-                notifications.map((notification) => (
-                  <Box key={notification.id} className="notification-item">
+              {visibleNotifications.length > 0 ? (
+                visibleNotifications.map((notification) => (
+                  <Box
+                    key={notification.id}
+                    className={`notification-item${notification.tripId ? " clickable-card" : ""}${notification.readFlag ? " read" : " unread"}`}
+                    onClick={() => openNotification(notification)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        openNotification(notification);
+                      }
+                    }}
+                    role={notification.tripId ? "button" : undefined}
+                    tabIndex={notification.tripId ? 0 : -1}
+                  >
                     <Typography sx={{ fontWeight: notification.readFlag ? 700 : 950 }}>
                       {notification.message || notification.tripName || "Trip update"}
                     </Typography>
