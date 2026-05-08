@@ -29,6 +29,7 @@ public class MsTripPlan {
     private String longitude;
     @Column(name = "google_map_url", length = 1000)
     private String googleMapUrl;
+    private Boolean completed = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "trip_id")

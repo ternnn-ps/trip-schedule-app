@@ -29,6 +29,7 @@ import LocationPicker from "@/components/LocationPicker";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -39,6 +40,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import MapIcon from "@mui/icons-material/Map";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import {
   Alert,
   Autocomplete,
@@ -370,6 +372,9 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       latitude: form.latitude.trim(),
       longitude: form.longitude.trim(),
       googleMapUrl: form.googleMapUrl.trim(),
+      completed: editingPlanId
+        ? Boolean(trip.plans.find((plan) => plan.id === editingPlanId)?.completed)
+        : false,
     };
 
     if (editingPlanId) {
@@ -392,6 +397,20 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
 
     setPlanMenu(null);
     setConfirmDialog({ type: "plan", plan });
+  }
+
+  function togglePlanCompleted(plan: TripPlanItem) {
+    if (!trip || !canEditTrip(trip, authUser)) {
+      return;
+    }
+
+    const { id, ...planInput } = plan;
+
+    setPlanMenu(null);
+    updatePlanInTrip(trip.id, id, {
+      ...planInput,
+      completed: !Boolean(plan.completed),
+    });
   }
 
   function handleAddUser(event: FormEvent<HTMLFormElement>) {
@@ -783,13 +802,23 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                     const googleMapUrl = getGoogleMapUrl(plan);
 
                     return (
-                    <Card key={plan.id} className="travel-plan-card">
+                    <Card key={plan.id} className={`travel-plan-card${plan.completed ? " completed" : ""}`}>
                       <CardContent sx={{ p: 2.25 }}>
                         <Stack spacing={1.5}>
                           <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
                             <Box sx={{ flex: 1, minWidth: 0 }}>
-                              <Typography sx={{ fontWeight: 900 }}>{plan.place}</Typography>
-                              <Typography sx={{ color: "var(--muted)" }}>{plan.detail}</Typography>
+                              <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", mb: 0.5 }}>
+                                <Typography className="plan-content-text" sx={{ fontWeight: 900 }}>{plan.place}</Typography>
+                                {plan.completed ? (
+                                  <Chip
+                                    className="plan-status-chip"
+                                    icon={<CheckCircleIcon />}
+                                    label="Done"
+                                    size="small"
+                                  />
+                                ) : null}
+                              </Stack>
+                              <Typography className="plan-content-text" sx={{ color: "var(--muted)" }}>{plan.detail}</Typography>
                               {plan.latitude && plan.longitude ? (
                                 <Box className="plan-place-panel" sx={{ mt: 1.5 }}>
                                   <LocationPicker
@@ -917,6 +946,22 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       open={planMenuOpen}
       onClose={() => setPlanMenu(null)}
     >
+      <MenuItem
+        onClick={() => {
+          if (planMenu) {
+            togglePlanCompleted(planMenu.plan);
+          }
+        }}
+      >
+        <ListItemIcon>
+          {planMenu?.plan.completed ? (
+            <RadioButtonUncheckedIcon fontSize="small" />
+          ) : (
+            <CheckCircleIcon fontSize="small" color="success" />
+          )}
+        </ListItemIcon>
+        <ListItemText>{planMenu?.plan.completed ? "Mark as active" : "Mark as done"}</ListItemText>
+      </MenuItem>
       <MenuItem
         onClick={() => {
           if (planMenu) {

@@ -7,6 +7,7 @@ export type TripPlanItem = {
   latitude?: string;
   longitude?: string;
   googleMapUrl?: string;
+  completed?: boolean;
 };
 
 export type Trip = {
