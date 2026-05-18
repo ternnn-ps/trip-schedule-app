@@ -60,7 +60,7 @@ function parseDateSegment(segment: string, fallbackYear?: number) {
     };
   }
 
-  const labelMatch = trimmedSegment.match(/^(\d{1,2})\s+([A-Za-z]+)\s*(\d{4})?$/);
+  const labelMatch = trimmedSegment.match(/^(\d{1,2})\s+([A-Za-z]+)\s*,?\s*(\d{4})?$/);
 
   if (labelMatch) {
     const month = monthIndexes[labelMatch[2].toLowerCase()];
@@ -73,6 +73,22 @@ function parseDateSegment(segment: string, fallbackYear?: number) {
     return {
       date: new Date(Date.UTC(year, month, Number(labelMatch[1]))),
       hasYear: Boolean(labelMatch[3]),
+    };
+  }
+
+  const monthFirstMatch = trimmedSegment.match(/^([A-Za-z]+)\s+(\d{1,2}),?\s*(\d{4})?$/);
+
+  if (monthFirstMatch) {
+    const month = monthIndexes[monthFirstMatch[1].toLowerCase()];
+    const year = monthFirstMatch[3] ? Number(monthFirstMatch[3]) : fallbackYear;
+
+    if (month === undefined || year === undefined) {
+      return null;
+    }
+
+    return {
+      date: new Date(Date.UTC(year, month, Number(monthFirstMatch[2]))),
+      hasYear: Boolean(monthFirstMatch[3]),
     };
   }
 

@@ -10,6 +10,7 @@ import { canViewTrip } from "@/services/tripPermissions";
 import {
   getTrips,
   getTripsServerSnapshot,
+  syncTripsFromBackend,
   subscribeTrips,
 } from "@/services/tripStore";
 import { Trip } from "@/types/trip";
@@ -27,7 +28,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 type CalendarTrip = Trip & {
   startDate: string;
@@ -122,19 +123,27 @@ export default function TripCalendar() {
   const today = startOfDay(new Date());
   const visibleTrips = trips.filter((trip) => canViewTrip(trip, authUser));
   const upcomingTrips = getCalendarTrips(visibleTrips, today);
-  const [displayMonth, setDisplayMonth] = useState(() => (
-    startOfMonth(upcomingTrips[0]?.startDateValue ?? today)
-  ));
+  const nextTrip = upcomingTrips[0] ?? null;
+  const [selectedMonth, setSelectedMonth] = useState<Date | null>(null);
+  const displayMonth = selectedMonth ?? startOfMonth(nextTrip?.startDateValue ?? today);
 
   const calendarStart = getCalendarStart(displayMonth);
   const days = Array.from({ length: 42 }, (_, index) => addDays(calendarStart, index));
-  const nextTrip = upcomingTrips[0] ?? null;
   const tripsThisMonth = upcomingTrips.filter((trip) => (
     trip.startDateValue <= addDays(addMonths(displayMonth, 1), -1)
       && trip.endDateValue >= startOfMonth(displayMonth)
   ));
+
+  useEffect(() => {
+    void syncTripsFromBackend();
+  }, []);
+
   function openTrip(tripId: string) {
     router.push(`/trip/${tripId}`);
+  }
+
+  function moveDisplayMonth(amount: number) {
+    setSelectedMonth((currentMonth) => addMonths(currentMonth ?? displayMonth, amount));
   }
 
   return (
@@ -200,7 +209,7 @@ export default function TripCalendar() {
                 variant="outlined"
                 size="small"
                 startIcon={<ChevronLeftIcon />}
-                onClick={() => setDisplayMonth((currentMonth) => addMonths(currentMonth, -1))}
+                onClick={() => moveDisplayMonth(-1)}
               >
                 Previous
               </Button>
@@ -211,7 +220,7 @@ export default function TripCalendar() {
                 variant="outlined"
                 size="small"
                 endIcon={<ChevronRightIcon />}
-                onClick={() => setDisplayMonth((currentMonth) => addMonths(currentMonth, 1))}
+                onClick={() => moveDisplayMonth(1)}
               >
                 Next
               </Button>
