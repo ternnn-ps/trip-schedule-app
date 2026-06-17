@@ -1077,7 +1077,8 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       open={usersMapOpen}
       onClose={() => setUsersMapOpen(false)}
       fullWidth
-      maxWidth="md"
+      maxWidth="lg"
+      className="user-locations-dialog"
     >
       <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontWeight: 900 }}>
         User Locations

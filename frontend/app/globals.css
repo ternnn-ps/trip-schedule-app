@@ -670,6 +670,10 @@ html[data-theme="dark"] .map-preview {
   height: 190px;
 }
 
+.user-locations-dialog .map-preview {
+  height: 260px;
+}
+
 .map-search-panel {
   padding: 12px;
   border: 1px solid var(--border);
@@ -963,6 +967,15 @@ html[data-theme="dark"] .map-preview {
 
   .map-preview {
     height: 230px;
+  }
+
+  .user-locations-dialog .MuiDialog-paper {
+    width: min(1080px, calc(100% - 64px)) !important;
+  }
+
+  .user-locations-dialog .map-preview {
+    height: min(58vh, 520px);
+    min-height: 420px;
   }
 
   .MuiDialog-paper {
