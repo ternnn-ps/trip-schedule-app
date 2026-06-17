@@ -82,7 +82,7 @@ export default function LoginClient() {
                 Sign in to your travel workspace
               </Typography>
               <Typography sx={{ color: "var(--muted)", mt: 1 }}>
-                Enter your username or email so trips can show who is currently planning.
+                Enter your Username or Email
               </Typography>
             </Box>
 
