@@ -98,7 +98,7 @@ export default function LoginClient() {
                     setError("");
                   }}
                   required
-                  helperText="Use an exact database username or email."
+                  // helperText="Use an exact database username or email."
                   fullWidth
                 />
 
