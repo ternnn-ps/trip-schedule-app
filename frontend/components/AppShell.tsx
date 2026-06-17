@@ -8,6 +8,7 @@ import {
   logoutUser,
   subscribeAuth,
 } from "@/services/authStore";
+import { KeepAliveService } from "@/services/KeepAliveService";
 import { NotificationService } from "@/services/NotificationService";
 import { syncTripsFromBackend } from "@/services/tripStore";
 import { AppNotification } from "@/types/notification";
@@ -38,11 +39,16 @@ export type ThemeMode = "light" | "dark";
 
 const THEME_STORAGE_KEY = "travel-schedule-theme";
 const THEME_UPDATED_EVENT = "travel-theme-updated";
+const keepAliveService = new KeepAliveService();
 const notificationService = new NotificationService();
 const configuredTripRefreshInterval = Number(process.env.NEXT_PUBLIC_TRIP_REFRESH_INTERVAL_MS);
 const TRIP_REFRESH_INTERVAL_MS = Number.isFinite(configuredTripRefreshInterval)
   ? Math.max(15_000, configuredTripRefreshInterval)
   : 45_000;
+const configuredKeepAliveInterval = Number(process.env.NEXT_PUBLIC_KEEP_ALIVE_INTERVAL_MS);
+const KEEP_ALIVE_INTERVAL_MS = Number.isFinite(configuredKeepAliveInterval)
+  ? Math.max(5 * 60 * 1000, configuredKeepAliveInterval)
+  : 60 * 60 * 1000;
 const READ_NOTIFICATION_VISIBLE_MS = 24 * 60 * 60 * 1000;
 
 const lightTheme = createTheme({
@@ -151,6 +157,47 @@ export default function AppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.dataset.theme = themeMode;
   }, [themeMode]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function pingBackend() {
+      if (!navigator.onLine) {
+        return;
+      }
+
+      try {
+        const ok = await keepAliveService.ping();
+
+        if (!cancelled) {
+          console.info(`Backend keep-alive ping ${ok ? "OK" : "failed"}`);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.warn("Backend keep-alive ping failed:", error);
+        }
+      }
+    }
+
+    void pingBackend();
+
+    const intervalId = window.setInterval(() => {
+      void pingBackend();
+    }, KEEP_ALIVE_INTERVAL_MS);
+    const handleOnlineOrFocus = () => {
+      void pingBackend();
+    };
+
+    window.addEventListener("online", handleOnlineOrFocus);
+    window.addEventListener("focus", handleOnlineOrFocus);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener("online", handleOnlineOrFocus);
+      window.removeEventListener("focus", handleOnlineOrFocus);
+    };
+  }, []);
 
   useEffect(() => {
     if (!authUser && !isLoginPage) {
