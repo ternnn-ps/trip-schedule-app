@@ -264,7 +264,9 @@ export default function TripCalendar() {
                             onClick={() => openTrip(trip.id)}
                             className="calendar-trip-pill"
                           >
-                            {trip.name}
+                            <Box component="span" className="calendar-trip-pill-label">
+                              {trip.name}
+                            </Box>
                           </Button>
                         ))}
                         {dayTrips.length > 2 ? (

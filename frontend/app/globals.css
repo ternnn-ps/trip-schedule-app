@@ -454,11 +454,15 @@ html[data-theme="dark"] .sidebar-shell {
 }
 
 .calendar-day-card {
+  display: flex;
+  min-width: 0;
   min-height: 124px;
+  flex-direction: column;
   padding: 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--panel);
+  overflow: hidden;
 }
 
 .calendar-day-card.muted {
@@ -476,7 +480,7 @@ html[data-theme="dark"] .sidebar-shell {
 }
 
 .calendar-day-indicator-row {
-  display: none;
+  display: flex;
   align-items: center;
   gap: 4px;
   min-height: 14px;
@@ -498,6 +502,7 @@ html[data-theme="dark"] .sidebar-shell {
 }
 
 .calendar-trip-pill {
+  width: 100%;
   justify-content: flex-start !important;
   min-width: 0 !important;
   padding: 6px 8px !important;
@@ -510,6 +515,20 @@ html[data-theme="dark"] .sidebar-shell {
   line-height: 1.2 !important;
   text-align: left !important;
   text-transform: none !important;
+}
+
+.calendar-day-trip-list {
+  display: flex !important;
+  min-width: 0;
+}
+
+.calendar-trip-pill-label {
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .calendar-trip-pill:hover {
