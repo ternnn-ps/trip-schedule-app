@@ -5,7 +5,8 @@ Monorepo for the Travel App frontend and backend.
 ## Projects
 
 - `frontend/` - Next.js application
-- `backend/` - Spring Boot API
+- `backend/` - legacy Spring Boot API, retained during the migration
+- `frontend/app/api/` - Node.js API routes deployed with the Next.js application
 
 ## Frontend
 
@@ -32,6 +33,36 @@ export APP_CORS_ALLOWED_ORIGINS="http://localhost:3000"
 ```
 
 ## Deployment
+
+### Recommended: Next.js + Node.js API + Neon
+
+The frontend and Node.js API are deployed together from `frontend/` as one Vercel project.
+The Node API preserves the existing routes, including `/api/user`, `/api/trip`,
+`/api/notifications`, `/api/customer`, and `/api/ping`.
+
+Set these Vercel environment variables:
+
+- `DATABASE_URL`: Neon PostgreSQL connection string. If you connect Neon through the
+  Vercel integration, `POSTGRES_URL` can be used instead.
+- `NEXT_PUBLIC_API_BASE_URL`: `/api`
+
+For local Node API development, copy `frontend/.env.example` to `frontend/.env.local`
+and provide a real Neon connection string. Start the application with:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The API health check is available at `http://localhost:3000/api/ping`.
+
+For a fresh Neon database, run
+`frontend/database/migrations/001_initial_schema.sql` in the Neon SQL Editor first.
+If the existing Spring Boot backend has already used the database, do not run this
+migration; its tables are already compatible with the Node API.
+
+### Legacy Spring Boot deployment
 
 Recommended free setup:
 
