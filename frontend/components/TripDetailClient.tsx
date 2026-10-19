@@ -681,17 +681,48 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
 
       <Card className="travel-panel">
         <CardContent sx={{ p: 2.5 }}>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ justifyContent: "space-between" }}>
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                Trip Users
-              </Typography>
-              <Typography sx={{ color: "var(--muted)", fontSize: "0.92rem", mt: 0.5 }}>
-                {trip.allUsers
-                  ? "Every database user can view and edit this trip."
-                  : "Selected users can edit this trip."}
-              </Typography>
-              <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: "wrap" }}>
+          <Box>
+            <Stack className="trip-user-heading" direction="row">
+              <Box className="trip-user-copy">
+                <Typography variant="h6" sx={{ fontWeight: 900 }}>
+                  Trip Users
+                </Typography>
+                <Typography sx={{ color: "var(--muted)", fontSize: "0.92rem", mt: 0.5 }}>
+                  {trip.allUsers
+                    ? "Every database user can view and edit this trip."
+                    : "Selected users can edit this trip."}
+                </Typography>
+              </Box>
+              <Stack className="trip-user-panel-actions">
+                <Button
+                  type="button"
+                  variant="outlined"
+                  className="trip-user-action-button"
+                  aria-label="Add user"
+                  onClick={() => setAddUserDialogOpen(true)}
+                  disabled={usersLoading || !canEditCurrentTrip || trip.allUsers}
+                >
+                  {usersLoading ? <CircularProgress size={18} /> : <PersonAddIcon />}
+                  <Box component="span" className="trip-user-action-label">
+                    Add User
+                  </Box>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  className="trip-user-action-button"
+                  aria-label="Show user locations map"
+                  onClick={() => setUsersMapOpen(true)}
+                  disabled={!trip.allUsers && trip.users.length === 0}
+                >
+                  <MapIcon />
+                  <Box component="span" className="trip-user-action-label">
+                    Map
+                  </Box>
+                </Button>
+              </Stack>
+            </Stack>
+            <Stack className="trip-user-chip-list" direction="row" spacing={1} sx={{ mt: 1.5, flexWrap: "wrap" }}>
                 {trip.hostUserName ? (
                   <Chip label={`Host: ${trip.hostUserName}`} color="primary" variant="outlined" />
                 ) : null}
@@ -711,56 +742,27 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                 ) : (
                   <Chip label="No users yet" variant="outlined" />
                 )}
-              </Stack>
-              {canReviewJoinRequests && !trip.allUsers && (trip.pendingUsers ?? []).length > 0 ? (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="caption" sx={{ color: "var(--muted)", fontWeight: 800 }}>
-                    Join requests
-                  </Typography>
-                  <Stack direction="row" spacing={1} sx={{ mt: 0.75, flexWrap: "wrap" }}>
-                    {(trip.pendingUsers ?? []).map((user) => (
-                      <Chip
-                        key={user}
-                        label={user}
-                        color="warning"
-                        variant="outlined"
-                        onDelete={() => addUserToTrip(trip.id, user)}
-                        deleteIcon={<CheckIcon />}
-                      />
-                    ))}
-                  </Stack>
-                </Box>
-              ) : null}
-            </Box>
-            <Stack className="trip-user-panel-actions">
-              <Button
-                type="button"
-                variant="outlined"
-                className="trip-user-action-button"
-                aria-label="Add user"
-                onClick={() => setAddUserDialogOpen(true)}
-                disabled={usersLoading || !canEditCurrentTrip || trip.allUsers}
-              >
-                {usersLoading ? <CircularProgress size={18} /> : <PersonAddIcon />}
-                <Box component="span" className="trip-user-action-label">
-                  Add User
-                </Box>
-              </Button>
-              <Button
-                type="button"
-                variant="outlined"
-                className="trip-user-action-button"
-                aria-label="Show user locations map"
-                onClick={() => setUsersMapOpen(true)}
-                disabled={!trip.allUsers && trip.users.length === 0}
-              >
-                <MapIcon />
-                <Box component="span" className="trip-user-action-label">
-                  Map
-                </Box>
-              </Button>
             </Stack>
-          </Stack>
+            {canReviewJoinRequests && !trip.allUsers && (trip.pendingUsers ?? []).length > 0 ? (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="caption" sx={{ color: "var(--muted)", fontWeight: 800 }}>
+                  Join requests
+                </Typography>
+                <Stack direction="row" spacing={1} sx={{ mt: 0.75, flexWrap: "wrap" }}>
+                  {(trip.pendingUsers ?? []).map((user) => (
+                    <Chip
+                      key={user}
+                      label={user}
+                      color="warning"
+                      variant="outlined"
+                      onDelete={() => addUserToTrip(trip.id, user)}
+                      deleteIcon={<CheckIcon />}
+                    />
+                  ))}
+                </Stack>
+              </Box>
+            ) : null}
+          </Box>
         </CardContent>
       </Card>
 
@@ -809,7 +811,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                     <Card key={plan.id} className={`travel-plan-card${plan.completed ? " completed" : ""}`}>
                       <CardContent sx={{ p: 2.25 }}>
                         <Stack spacing={1.5}>
-                          <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+                          <Stack className="plan-card-header" direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { xs: "stretch", sm: "flex-start" }, justifyContent: "space-between" }}>
                             <Box sx={{ flex: 1, minWidth: 0 }}>
                               <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", mb: 0.5 }}>
                                 {plan.locationName && (plan.latitude || plan.longitude || plan.googleMapUrl) ? (
@@ -828,7 +830,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                                   />
                                 ) : null}
                               </Stack>
-                              <Typography className="plan-content-text" sx={{ color: "var(--muted)", whiteSpace: "pre-line" }}>
+                              <Typography className="plan-content-text plan-detail" sx={{ color: "var(--muted)", whiteSpace: "pre-line" }}>
                                 {plan.detail}
                               </Typography>
                               {plan.latitude && plan.longitude ? (
@@ -896,7 +898,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                                 </Box>
                               ) : null}
                             </Box>
-                            <Stack direction="row" spacing={1} sx={{ flexShrink: 0, alignItems: "center" }}>
+                            <Stack className="plan-card-time-actions" direction="row" spacing={1} sx={{ flexShrink: 0, alignItems: "center", justifyContent: { xs: "flex-end", sm: "flex-start" }, order: { xs: -1, sm: 0 } }}>
                               <Chip className="plan-time-chip" icon={<AccessTimeIcon />} label={plan.time} size="small" />
                               {canEditCurrentTrip ? (
                                 <IconButton

@@ -680,6 +680,30 @@ html[data-theme="dark"] .sidebar-shell {
   justify-content: flex-start;
 }
 
+.trip-user-heading {
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.trip-user-copy {
+  min-width: 0;
+}
+
+.trip-user-chip-list {
+  align-items: center;
+}
+
+.trip-user-chip-list .MuiChip-root {
+  max-width: 100%;
+}
+
+.trip-user-chip-list .MuiChip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .trip-user-action-button {
   width: 42px;
   min-width: 42px !important;
@@ -690,6 +714,11 @@ html[data-theme="dark"] .sidebar-shell {
 
 .trip-user-action-label {
   display: none;
+}
+
+.plan-detail {
+  display: block;
+  line-height: 1.55 !important;
 }
 
 .trip-note {
@@ -858,6 +887,29 @@ html[data-theme="dark"] .map-preview {
   .plan-map-actions .MuiButton-root {
     justify-content: flex-start;
     padding-inline: 0;
+  }
+
+  .trip-user-panel-actions {
+    margin-left: auto;
+  }
+
+  .plan-card-header {
+    gap: 12px !important;
+  }
+
+  .plan-card-header > .MuiBox-root {
+    width: 100%;
+  }
+
+  .plan-card-time-actions {
+    width: 100%;
+    min-height: 42px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .plan-detail {
+    font-size: 0.95rem !important;
   }
 
   .travel-trip-card .MuiCardContent-root,
