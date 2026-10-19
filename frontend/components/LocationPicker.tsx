@@ -23,7 +23,10 @@ type LocationPickerProps = {
   defaultLatitude?: string;
   defaultLongitude?: string;
   markers?: LocationMarker[];
-  onChange?: (coordinates: { latitude: string; longitude: string }) => void;
+  onChange?: (
+    coordinates: { latitude: string; longitude: string },
+    source?: "map" | "search" | "default",
+  ) => void;
   onPlaceSelect?: (placeName: string) => void;
   readOnly?: boolean;
 };
@@ -176,7 +179,7 @@ export default function LocationPicker({
           onChangeRef.current?.({
             latitude: event.latlng.lat.toFixed(6),
             longitude: event.latlng.lng.toFixed(6),
-          });
+          }, "map");
         });
       } else {
         map.dragging.disable();
@@ -248,7 +251,7 @@ export default function LocationPicker({
     autoPinnedRef.current = true;
 
     function pinCoordinates(coordinates: [number, number]) {
-      onChangeRef.current?.(formatCoordinates(coordinates));
+      onChangeRef.current?.(formatCoordinates(coordinates), "default");
     }
 
     const defaultCoordinates = parseCoordinates(defaultLatitude, defaultLongitude);
@@ -394,7 +397,7 @@ export default function LocationPicker({
       longitude: Number(result.lon).toFixed(6),
     };
 
-    onChangeRef.current?.(coordinates);
+    onChangeRef.current?.(coordinates, "search");
     onPlaceSelectRef.current?.(result.display_name.split(",")[0] ?? result.display_name);
     setQuery(result.display_name);
     setResults([]);

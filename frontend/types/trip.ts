@@ -4,6 +4,7 @@ export type TripPlanItem = {
   time: string;
   detail: string;
   place: string;
+  locationName?: string;
   latitude?: string;
   longitude?: string;
   googleMapUrl?: string;

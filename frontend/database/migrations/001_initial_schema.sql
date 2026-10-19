@@ -1,5 +1,5 @@
 -- Run this in the Neon SQL Editor only for a fresh database.
--- Existing databases created by the Spring Boot backend already have compatible tables.
+-- Existing databases created by the Spring Boot backend need migration 002 as well.
 
 CREATE TABLE IF NOT EXISTS ms_user (
   user_id BIGSERIAL PRIMARY KEY,
@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS ms_trip_plan (
   plan_time VARCHAR(255),
   detail VARCHAR(2000),
   place VARCHAR(255),
+  location_name VARCHAR(500),
   latitude VARCHAR(255),
   longitude VARCHAR(255),
   google_map_url VARCHAR(1000),

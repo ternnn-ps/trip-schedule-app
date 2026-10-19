@@ -107,6 +107,7 @@ function normalizeTrip(trip: Trip): Trip {
     plans: Array.isArray(trip.plans)
       ? trip.plans.map((plan) => ({
           ...plan,
+          locationName: plan.locationName ?? "",
           latitude: plan.latitude ?? "",
           longitude: plan.longitude ?? "",
           googleMapUrl: plan.googleMapUrl ?? "",

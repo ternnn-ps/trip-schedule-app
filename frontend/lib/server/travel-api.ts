@@ -19,6 +19,7 @@ type PlanRow = {
   time: string;
   detail: string;
   place: string;
+  location_name: string | null;
   latitude: string | null;
   longitude: string | null;
   google_map_url: string | null;
@@ -78,7 +79,7 @@ async function getTrip(client: PoolClient, id: string) {
       [id],
     ),
     client.query<PlanRow>(
-      `SELECT id, plan_day AS day, plan_time AS time, detail, place, latitude, longitude,
+      `SELECT id, plan_day AS day, plan_time AS time, detail, place, location_name, latitude, longitude,
               google_map_url, completed
          FROM ms_trip_plan
         WHERE trip_id = $1 AND record_status = 'A'
@@ -103,6 +104,7 @@ async function getTrip(client: PoolClient, id: string) {
       time: plan.time,
       detail: plan.detail,
       place: plan.place,
+      locationName: plan.location_name ?? "",
       latitude: plan.latitude ?? "",
       longitude: plan.longitude ?? "",
       googleMapUrl: plan.google_map_url ?? "",
@@ -131,15 +133,16 @@ async function writePlan(client: PoolClient, tripId: string, plan: TripPlanInput
   const id = normalize(plan.id) || makeId("plan");
   await client.query(
     `INSERT INTO ms_trip_plan (
-      id, plan_day, plan_time, detail, place, latitude, longitude, google_map_url,
+      id, plan_day, plan_time, detail, place, location_name, latitude, longitude, google_map_url,
       completed, trip_id, created_date, updated_date, record_status
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, 'A')`,
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12, 'A')`,
     [
       id,
       normalize(plan.day),
       normalize(plan.time),
       normalize(plan.detail),
       normalize(plan.place),
+      normalize(plan.locationName),
       normalize(plan.latitude),
       normalize(plan.longitude),
       normalize(plan.googleMapUrl),
@@ -310,10 +313,10 @@ export async function updateTripPlan(tripId: string, planId: string, plan: TripP
     const existing = trip.plans.find((item) => item.id === planId);
     if (!existing) return undefined;
     await client.query(
-      `UPDATE ms_trip_plan SET plan_day = $3, plan_time = $4, detail = $5, place = $6,
-        latitude = $7, longitude = $8, google_map_url = $9, completed = $10, updated_date = NOW()
+      `UPDATE ms_trip_plan SET plan_day = $3, plan_time = $4, detail = $5, place = $6, location_name = $7,
+        latitude = $8, longitude = $9, google_map_url = $10, completed = $11, updated_date = NOW()
        WHERE id = $1 AND trip_id = $2 AND record_status = 'A'`,
-      [planId, tripId, normalize(plan.day), normalize(plan.time), normalize(plan.detail), normalize(plan.place), normalize(plan.latitude), normalize(plan.longitude), normalize(plan.googleMapUrl), Boolean(plan.completed)],
+      [planId, tripId, normalize(plan.day), normalize(plan.time), normalize(plan.detail), normalize(plan.place), normalize(plan.locationName), normalize(plan.latitude), normalize(plan.longitude), normalize(plan.googleMapUrl), Boolean(plan.completed)],
     );
     await client.query("UPDATE ms_trip SET updated_by = 'Admin', updated_date = NOW() WHERE id = $1", [tripId]);
     return getTrip(client, tripId);

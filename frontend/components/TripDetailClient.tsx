@@ -77,6 +77,7 @@ const emptyPlanForm = {
   time: "",
   detail: "",
   place: "",
+  locationName: "",
   latitude: "",
   longitude: "",
   googleMapUrl: "",
@@ -295,6 +296,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       time: plan.time,
       detail: plan.detail,
       place: plan.place,
+      locationName: plan.locationName ?? "",
       latitude: plan.latitude ?? "",
       longitude: plan.longitude ?? "",
       googleMapUrl: plan.googleMapUrl ?? "",
@@ -312,6 +314,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       ...currentForm,
       googleMapUrl: value,
       place: parsedPlace?.placeName && !currentForm.place.trim() ? parsedPlace.placeName : currentForm.place,
+      locationName: parsedPlace?.placeName && !currentForm.locationName.trim() ? parsedPlace.placeName : currentForm.locationName,
       latitude: parsedPlace?.latitude ?? currentForm.latitude,
       longitude: parsedPlace?.longitude ?? currentForm.longitude,
     }));
@@ -369,6 +372,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       time: form.time.trim(),
       detail: form.detail.trim(),
       place: form.place.trim(),
+      locationName: form.locationName.trim(),
       latitude: form.latitude.trim(),
       longitude: form.longitude.trim(),
       googleMapUrl: form.googleMapUrl.trim(),
@@ -808,6 +812,12 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                           <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
                             <Box sx={{ flex: 1, minWidth: 0 }}>
                               <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", mb: 0.5 }}>
+                                {plan.locationName && (plan.latitude || plan.longitude || plan.googleMapUrl) ? (
+                                  <Stack className="plan-location-name" direction="row" spacing={0.5} sx={{ alignItems: "center", width: "100%" }}>
+                                    <LocationOnIcon fontSize="inherit" />
+                                    <Typography className="plan-content-text">{plan.locationName}</Typography>
+                                  </Stack>
+                                ) : null}
                                 <Typography className="plan-content-text" sx={{ fontWeight: 900 }}>{plan.place}</Typography>
                                 {plan.completed ? (
                                   <Chip
@@ -887,7 +897,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                               ) : null}
                             </Box>
                             <Stack direction="row" spacing={1} sx={{ flexShrink: 0, alignItems: "center" }}>
-                              <Chip icon={<AccessTimeIcon />} label={plan.time} size="small" />
+                              <Chip className="plan-time-chip" icon={<AccessTimeIcon />} label={plan.time} size="small" />
                               {canEditCurrentTrip ? (
                                 <IconButton
                                   aria-label={`Plan actions for ${plan.place}`}
@@ -1213,10 +1223,17 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
               <LocationPicker
                 latitude={form.latitude}
                 longitude={form.longitude}
-                onChange={(coordinates) => setForm((currentForm) => ({ ...currentForm, ...coordinates }))}
+                onChange={(coordinates, source) =>
+                  setForm((currentForm) => ({
+                    ...currentForm,
+                    ...coordinates,
+                    locationName: source === "map" ? "" : currentForm.locationName,
+                  }))
+                }
                 onPlaceSelect={(placeName) =>
                   setForm((currentForm) => ({
                     ...currentForm,
+                    locationName: placeName,
                     place: currentForm.place.trim() ? currentForm.place : placeName,
                   }))
                 }
