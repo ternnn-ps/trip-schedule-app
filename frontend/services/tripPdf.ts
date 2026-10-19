@@ -25,7 +25,11 @@ type PdfLink = {
 };
 
 function safeText(value?: string) {
-  return value?.replace(/\s+/g, " ").trim() || "";
+  return value?.replace(/\r\n?/g, "\n").trim() || "";
+}
+
+function inlineText(value?: string) {
+  return safeText(value).replace(/\s+/g, " ").trim();
 }
 
 function makeFileName(value: string) {
@@ -74,12 +78,12 @@ function drawText(
   ctx.fillStyle = options.color ?? "#111827";
   ctx.textAlign = options.align ?? "left";
   ctx.textBaseline = "top";
-  ctx.fillText(safeText(text), x, y);
+  ctx.fillText(inlineText(text), x, y);
 }
 
 function textWidth(ctx: CanvasRenderingContext2D, text: string, size: number, weight = 500) {
   setFont(ctx, size, weight);
-  return ctx.measureText(safeText(text)).width;
+  return ctx.measureText(inlineText(text)).width;
 }
 
 function segmentText(text: string) {
@@ -98,25 +102,34 @@ function wrapLines(
   weight = 500,
 ) {
   setFont(ctx, size, weight);
-  const segments = segmentText(safeText(text));
   const lines: string[] = [];
-  let currentLine = "";
+  const paragraphs = safeText(text).split("\n");
 
-  segments.forEach((segment) => {
-    const nextLine = currentLine + segment;
-
-    if (ctx.measureText(nextLine).width > maxWidth && currentLine.trim()) {
-      lines.push(currentLine.trimEnd());
-      currentLine = segment.trimStart();
+  paragraphs.forEach((paragraph) => {
+    if (!paragraph.trim()) {
+      lines.push("");
       return;
     }
 
-    currentLine = nextLine;
-  });
+    const segments = segmentText(paragraph);
+    let currentLine = "";
 
-  if (currentLine.trim()) {
-    lines.push(currentLine.trimEnd());
-  }
+    segments.forEach((segment) => {
+      const nextLine = currentLine + segment;
+
+      if (ctx.measureText(nextLine).width > maxWidth && currentLine.trim()) {
+        lines.push(currentLine.trimEnd());
+        currentLine = segment.trimStart();
+        return;
+      }
+
+      currentLine = nextLine;
+    });
+
+    if (currentLine.trim()) {
+      lines.push(currentLine.trimEnd());
+    }
+  });
 
   return lines.length > 0 ? lines : [""];
 }
@@ -167,84 +180,113 @@ class ReportRenderer {
   }
 
   section(title: string) {
-    this.ensureSpace(52);
-    drawText(this.ctx, title, pageMargin, this.y, {
-      size: 20,
+    this.ensureSpace(56);
+    this.ctx.fillStyle = "#2563eb";
+    roundRect(this.ctx, pageMargin, this.y + 7, 5, 23, 3);
+    this.ctx.fill();
+    drawText(this.ctx, title, pageMargin + 16, this.y, {
+      size: 19,
       weight: 800,
       color: "#0f172a",
     });
-    this.y += 34;
+    this.y += 39;
   }
 
   summaryCard(title: string, body: string) {
     const lines = wrapLines(this.ctx, body, canvasPageWidth - pageMargin * 2 - 28, 14, 500);
-    const height = 54 + lines.length * 19;
+    const height = 50 + lines.length * 20;
     this.ensureSpace(height + 12);
     this.card(pageMargin, this.y, canvasPageWidth - pageMargin * 2, height);
     drawText(this.ctx, title, pageMargin + 18, this.y + 16, {
-      size: 15,
+      size: 12,
       weight: 800,
-      color: "#0f766e",
+      color: "#2563eb",
     });
-    drawWrappedText(this.ctx, body, pageMargin + 18, this.y + 43, canvasPageWidth - pageMargin * 2 - 36, 19, {
+    drawWrappedText(this.ctx, body, pageMargin + 18, this.y + 35, canvasPageWidth - pageMargin * 2 - 36, 20, {
       size: 14,
       color: "#334155",
     });
     this.y += height + 12;
   }
 
+  dayHeader(day: string, planCount: number) {
+    this.ensureSpace(46);
+    drawText(this.ctx, day, pageMargin, this.y, {
+      size: 15,
+      weight: 900,
+      color: "#0f172a",
+    });
+    drawText(this.ctx, `${planCount} ${planCount === 1 ? "stop" : "stops"}`, canvasPageWidth - pageMargin, this.y + 3, {
+      size: 11,
+      weight: 800,
+      color: "#64748b",
+      align: "right",
+    });
+    this.ctx.strokeStyle = "#dbe4ee";
+    this.ctx.beginPath();
+    this.ctx.moveTo(pageMargin, this.y + 28);
+    this.ctx.lineTo(canvasPageWidth - pageMargin, this.y + 28);
+    this.ctx.stroke();
+    this.y += 40;
+  }
+
   planCard(plan: TripPlanItem, index: number) {
     const width = canvasPageWidth - pageMargin * 2;
-    const contentWidth = width - 40;
-    const detailHeight = wrapLines(this.ctx, plan.detail, contentWidth, 14, 500).length * 19;
-    const mapText = plan.latitude && plan.longitude ? `Map: ${plan.latitude}, ${plan.longitude}` : "";
-    const hasMapLine = Boolean(mapText || plan.googleMapUrl);
-    const height = 94 + detailHeight + (hasMapLine ? 26 : 0);
+    const contentX = pageMargin + 102;
+    const contentWidth = width - 122;
+    const titleHeight = Math.min(wrapLines(this.ctx, plan.place, contentWidth - (plan.completed ? 86 : 0), 17, 900).length, 2) * 22;
+    const detailHeight = wrapLines(this.ctx, plan.detail, contentWidth, 14, 500).length * 20;
+    const hasMapLine = Boolean(plan.latitude || plan.longitude || plan.googleMapUrl);
+    const height = 30 + titleHeight + 11 + detailHeight + (hasMapLine ? 31 : 0) + 19;
+    const accent = plan.completed ? "#94a3b8" : "#2563eb";
 
     this.ensureSpace(height + 14);
     this.card(pageMargin, this.y, width, height);
 
-    this.ctx.fillStyle = "#0f766e";
-    roundRect(this.ctx, pageMargin, this.y, 5, height, 6);
+    this.ctx.fillStyle = accent;
+    roundRect(this.ctx, pageMargin, this.y, 5, height, 5);
     this.ctx.fill();
 
-    drawText(this.ctx, `${index + 1}`, pageMargin + 20, this.y + 18, {
-      size: 18,
+    drawText(this.ctx, plan.time || "--:--", pageMargin + 20, this.y + 20, {
+      size: 15,
       weight: 900,
-      color: "#0f766e",
+      color: accent,
     });
-    drawText(this.ctx, `${plan.day} | ${plan.time}`, pageMargin + 58, this.y + 18, {
-      size: 12,
+    drawText(this.ctx, `STOP ${index + 1}`, pageMargin + 20, this.y + 43, {
+      size: 10,
       weight: 800,
       color: "#64748b",
     });
-    drawWrappedText(this.ctx, plan.place, pageMargin + 58, this.y + 39, contentWidth - 38, 24, {
-      size: 18,
+    drawWrappedText(this.ctx, plan.place, contentX, this.y + 19, contentWidth - (plan.completed ? 86 : 0), 22, {
+      size: 17,
       weight: 900,
       color: "#0f172a",
       maxLines: 2,
     });
-    drawWrappedText(this.ctx, plan.detail, pageMargin + 20, this.y + 88, contentWidth, 19, {
+    if (plan.completed) {
+      this.statusPill(contentX + contentWidth - 74, this.y + 20, "DONE");
+    }
+    drawWrappedText(this.ctx, plan.detail, contentX, this.y + 19 + titleHeight + 11, contentWidth, 20, {
       size: 14,
-      color: "#334155",
+      color: plan.completed ? "#64748b" : "#334155",
     });
 
     if (hasMapLine) {
       const lineY = this.y + height - 31;
-      let linkX = pageMargin + 20;
+      let linkX = contentX;
 
-      if (mapText) {
-        drawWrappedText(this.ctx, mapText, pageMargin + 20, lineY, contentWidth, 17, {
+      if (plan.latitude || plan.longitude) {
+        const mapText = "Pinned location";
+        drawText(this.ctx, mapText, contentX, lineY, {
           size: 12,
           weight: 700,
           color: "#64748b",
-          maxLines: 1,
         });
-        linkX += Math.min(textWidth(this.ctx, mapText, 12, 700) + 18, contentWidth - 140);
+        linkX += textWidth(this.ctx, mapText, 12, 700) + 18;
       }
 
       if (plan.googleMapUrl) {
-        const linkLabel = "Open Google Maps";
+        const linkLabel = "View on Google Maps";
         drawText(this.ctx, linkLabel, linkX, lineY, {
           size: 12,
           weight: 800,
@@ -255,6 +297,18 @@ class ReportRenderer {
     }
 
     this.y += height + 14;
+  }
+
+  private statusPill(x: number, y: number, label: string) {
+    this.ctx.fillStyle = "#ecfdf5";
+    roundRect(this.ctx, x, y, 74, 22, 11);
+    this.ctx.fill();
+    drawText(this.ctx, label, x + 37, y + 5, {
+      size: 10,
+      weight: 900,
+      color: "#047857",
+      align: "center",
+    });
   }
 
   private get ctx() {
@@ -292,27 +346,49 @@ class ReportRenderer {
   }
 
   private drawCoverHeader() {
+    const width = canvasPageWidth - pageMargin * 2;
     this.ctx.fillStyle = "#f8fafc";
-    roundRect(this.ctx, pageMargin, pageMargin, canvasPageWidth - pageMargin * 2, 156, 14);
+    roundRect(this.ctx, pageMargin, pageMargin, width, 184, 12);
     this.ctx.fill();
-    this.ctx.fillStyle = "#0f766e";
-    roundRect(this.ctx, pageMargin, pageMargin, 7, 156, 8);
+    this.ctx.fillStyle = "#2563eb";
+    roundRect(this.ctx, pageMargin, pageMargin, 7, 184, 6);
     this.ctx.fill();
 
-    drawWrappedText(this.ctx, this.trip.name, pageMargin + 28, pageMargin + 24, canvasPageWidth - pageMargin * 2 - 56, 34, {
-      size: 29,
+    drawText(this.ctx, "TRIP REPORT", pageMargin + 28, pageMargin + 23, {
+      size: 11,
+      weight: 900,
+      color: "#2563eb",
+    });
+    drawWrappedText(this.ctx, this.trip.name, pageMargin + 28, pageMargin + 46, width - 56, 32, {
+      size: 27,
       weight: 900,
       color: "#0f172a",
       maxLines: 2,
     });
-    drawWrappedText(this.ctx, `${this.trip.destination} | ${this.trip.dateRange}`, pageMargin + 28, pageMargin + 108, canvasPageWidth - pageMargin * 2 - 56, 23, {
-      size: 16,
+    drawWrappedText(this.ctx, this.trip.destination, pageMargin + 28, pageMargin + 114, width - 56, 21, {
+      size: 15,
       weight: 700,
       color: "#475569",
       maxLines: 2,
     });
+    this.infoPill(pageMargin + 28, pageMargin + 145, this.trip.dateRange || "Date not set", "#dbeafe", "#1d4ed8");
+    const planLabel = `${this.trip.plans.length} ${this.trip.plans.length === 1 ? "stop" : "stops"}`;
+    const dateWidth = Math.min(textWidth(this.ctx, this.trip.dateRange || "Date not set", 11, 800) + 30, 258);
+    this.infoPill(pageMargin + 42 + dateWidth, pageMargin + 145, planLabel, "#dcfce7", "#15803d");
 
-    this.y = 232;
+    this.y = 254;
+  }
+
+  private infoPill(x: number, y: number, label: string, background: string, color: string) {
+    const width = Math.min(textWidth(this.ctx, label, 11, 800) + 30, 258);
+    this.ctx.fillStyle = background;
+    roundRect(this.ctx, x, y, width, 26, 13);
+    this.ctx.fill();
+    drawText(this.ctx, label, x + 15, y + 7, {
+      size: 11,
+      weight: 800,
+      color,
+    });
   }
 
   private card(x: number, y: number, width: number, height: number) {
@@ -376,7 +452,22 @@ function renderTripReport(trip: Trip) {
   if (trip.plans.length === 0) {
     renderer.summaryCard("No plans yet", "Add itinerary stops to include them in this report.");
   } else {
-    trip.plans.forEach((plan, index) => renderer.planCard(plan, index));
+    const plansByDay = new Map<string, TripPlanItem[]>();
+
+    trip.plans.forEach((plan) => {
+      const day = safeText(plan.day) || "Unscheduled";
+      const plans = plansByDay.get(day) ?? [];
+      plans.push(plan);
+      plansByDay.set(day, plans);
+    });
+
+    [...plansByDay.entries()]
+      .sort(([firstDay], [secondDay]) => firstDay.localeCompare(secondDay, undefined, { numeric: true, sensitivity: "base" }))
+      .forEach(([day, plans]) => {
+        const sortedPlans = [...plans].sort((firstPlan, secondPlan) => firstPlan.time.localeCompare(secondPlan.time));
+        renderer.dayHeader(day, sortedPlans.length);
+        sortedPlans.forEach((plan, index) => renderer.planCard(plan, index));
+      });
   }
 
   return renderer.getPages();
