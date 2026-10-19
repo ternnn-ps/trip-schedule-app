@@ -348,8 +348,8 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       return;
     }
 
-    if (!form.day.trim() || !form.time.trim() || !form.detail.trim() || !form.place.trim()) {
-      setError("Day, time, detail, and place are required.");
+    if (!form.day.trim() || !form.time.trim() || !form.place.trim()) {
+      setError("Day, time, and header are required.");
       return;
     }
 
