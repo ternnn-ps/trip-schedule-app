@@ -818,7 +818,9 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                                   />
                                 ) : null}
                               </Stack>
-                              <Typography className="plan-content-text" sx={{ color: "var(--muted)" }}>{plan.detail}</Typography>
+                              <Typography className="plan-content-text" sx={{ color: "var(--muted)", whiteSpace: "pre-line" }}>
+                                {plan.detail}
+                              </Typography>
                               {plan.latitude && plan.longitude ? (
                                 <Box className="plan-place-panel" sx={{ mt: 1.5 }}>
                                   <LocationPicker
@@ -1137,54 +1139,76 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
           <Stack spacing={2.25}>
             {error ? <Alert severity="warning">{error}</Alert> : null}
 
-            <Box className="plan-form-grid">
-              <TextField
-                label="Day"
-                select
-                value={form.day}
-                onChange={(event) => setForm({ ...form, day: event.target.value })}
-                helperText={
-                  tripDurationDays
-                    ? `This trip allows Day 1 to Day ${tripDurationDays}.`
-                    : "Date range could not be read, so showing Day 1 to Day 14."
-                }
-                fullWidth
-              >
-                <MenuItem value="" disabled>
-                  Select day
-                </MenuItem>
-                {hasSelectedDayOutsideOptions ? (
-                  <MenuItem value={form.day} disabled>
-                    {form.day} (outside trip range)
+            <Box className="plan-form-section">
+              <Typography className="plan-form-section-title">
+                Schedule
+              </Typography>
+              <Box className="plan-form-grid">
+                <TextField
+                  label="Day"
+                  select
+                  value={form.day}
+                  onChange={(event) => setForm({ ...form, day: event.target.value })}
+                  helperText={
+                    tripDurationDays
+                      ? `This trip allows Day 1 to Day ${tripDurationDays}.`
+                      : "Date range could not be read, so showing Day 1 to Day 14."
+                  }
+                  fullWidth
+                >
+                  <MenuItem value="" disabled>
+                    Select day
                   </MenuItem>
-                ) : null}
-                {dayOptions.map((day) => (
-                  <MenuItem key={day} value={day}>
-                    {day}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                label="Time"
-                type="time"
-                value={form.time}
-                onChange={(event) => setForm({ ...form, time: event.target.value })}
-                slotProps={{ inputLabel: { shrink: true } }}
-                fullWidth
-              />
+                  {hasSelectedDayOutsideOptions ? (
+                    <MenuItem value={form.day} disabled>
+                      {form.day} (outside trip range)
+                    </MenuItem>
+                  ) : null}
+                  {dayOptions.map((day) => (
+                    <MenuItem key={day} value={day}>
+                      {day}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  label="Time"
+                  type="time"
+                  value={form.time}
+                  onChange={(event) => setForm({ ...form, time: event.target.value })}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  fullWidth
+                />
+              </Box>
             </Box>
-            <TextField label="Place" value={form.place} onChange={(event) => setForm({ ...form, place: event.target.value })} placeholder="Train station, hotel, cafe..." fullWidth />
-            <TextField
-              label="Google Maps URL"
-              value={form.googleMapUrl}
-              onChange={(event) => handleGoogleMapUrlChange(event.target.value)}
-              placeholder="Paste Google Maps link"
-              helperText={mapUrlMessage || "Optional. If the URL includes coordinates, the map pin will update automatically."}
-              fullWidth
-            />
-            <Box>
-              <Typography sx={{ mb: 1, color: "var(--muted)", fontWeight: 800 }}>
-                Pin Location
+
+            <Box className="plan-form-section">
+              <Typography className="plan-form-section-title">
+                Stop details
+              </Typography>
+              <Stack spacing={1.5}>
+                <TextField
+                  label="Header"
+                  value={form.place}
+                  onChange={(event) => setForm({ ...form, place: event.target.value })}
+                  placeholder="Train station, hotel, cafe..."
+                  fullWidth
+                />
+                <TextField
+                  label="Details"
+                  value={form.detail}
+                  onChange={(event) => setForm({ ...form, detail: event.target.value })}
+                  placeholder="What will happen at this stop?"
+                  multiline
+                  minRows={5}
+                  maxRows={10}
+                  fullWidth
+                />
+              </Stack>
+            </Box>
+
+            <Box className="plan-form-section">
+              <Typography className="plan-form-section-title">
+                Pin location
               </Typography>
               <LocationPicker
                 latitude={form.latitude}
@@ -1202,8 +1226,16 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                   ? `${form.latitude}, ${form.longitude}`
                   : "Click the map to drop a pin for this plan."}
               </Typography>
+              <TextField
+                label="Google Maps URL"
+                value={form.googleMapUrl}
+                onChange={(event) => handleGoogleMapUrlChange(event.target.value)}
+                placeholder="Paste Google Maps link"
+                helperText={mapUrlMessage || "Optional. If the URL includes coordinates, the map pin will update automatically."}
+                fullWidth
+                sx={{ mt: 1.5 }}
+              />
             </Box>
-            <TextField label="Detail" value={form.detail} onChange={(event) => setForm({ ...form, detail: event.target.value })} multiline minRows={3} fullWidth />
           </Stack>
         </DialogContent>
 

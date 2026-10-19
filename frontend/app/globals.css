@@ -313,6 +313,19 @@ html[data-theme="dark"] .sidebar-shell {
   grid-template-columns: 1fr;
 }
 
+.plan-form-section {
+  display: grid;
+  gap: 12px;
+}
+
+.plan-form-section-title {
+  color: var(--muted);
+  font-size: 0.78rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .focus-strip,
 .travel-panel,
 .travel-stat-card,
