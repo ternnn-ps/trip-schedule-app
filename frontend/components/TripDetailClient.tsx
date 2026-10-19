@@ -722,7 +722,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                 </Button>
               </Stack>
             </Stack>
-            <Stack className="trip-user-chip-list" direction="row" spacing={1} sx={{ mt: 1.5, flexWrap: "wrap" }}>
+            <Stack className="trip-user-chip-list" direction="row" spacing={1.25} useFlexGap sx={{ mt: 1.5, flexWrap: "wrap" }}>
                 {trip.hostUserName ? (
                   <Chip label={`Host: ${trip.hostUserName}`} color="primary" variant="outlined" />
                 ) : null}
@@ -748,7 +748,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                 <Typography variant="caption" sx={{ color: "var(--muted)", fontWeight: 800 }}>
                   Join requests
                 </Typography>
-                <Stack direction="row" spacing={1} sx={{ mt: 0.75, flexWrap: "wrap" }}>
+                <Stack direction="row" spacing={1} useFlexGap sx={{ mt: 0.75, flexWrap: "wrap" }}>
                   {(trip.pendingUsers ?? []).map((user) => (
                     <Chip
                       key={user}
