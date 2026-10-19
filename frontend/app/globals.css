@@ -348,6 +348,24 @@ html[data-theme="dark"] .sidebar-shell {
   transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, opacity 140ms ease, background 140ms ease;
 }
 
+.travel-trip-card {
+  display: flex;
+  height: 100%;
+}
+
+.travel-trip-card .MuiCardContent-root {
+  display: flex;
+  flex: 1;
+}
+
+.trip-card-content {
+  flex: 1;
+}
+
+.trip-card-action {
+  margin-top: auto !important;
+}
+
 .clickable-card {
   cursor: pointer;
 }

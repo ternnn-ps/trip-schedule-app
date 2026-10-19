@@ -110,6 +110,21 @@ function uniqueNames(names: string[]) {
   return Array.from(new Set(names.map((name) => name.trim()).filter(Boolean)));
 }
 
+function getPlanDayNumber(day: string) {
+  const match = day.match(/\d+/);
+  const dayNumber = match ? Number(match[0]) : Number.MAX_SAFE_INTEGER;
+
+  return Number.isInteger(dayNumber) ? dayNumber : Number.MAX_SAFE_INTEGER;
+}
+
+function getNextPlan(trip: Trip) {
+  return [...trip.plans].sort((firstPlan, secondPlan) => (
+    getPlanDayNumber(firstPlan.day) - getPlanDayNumber(secondPlan.day)
+      || firstPlan.time.localeCompare(secondPlan.time)
+      || firstPlan.place.localeCompare(secondPlan.place)
+  ))[0];
+}
+
 export default function TripOverview() {
   const router = useRouter();
   const trips = useSyncExternalStore(subscribeTrips, getTrips, getTripsServerSnapshot);
@@ -443,6 +458,7 @@ export default function TripOverview() {
             const tripCanView = canViewTrip(trip, authUser);
             const tripCanEdit = canEditTrip(trip, authUser);
             const tripRequested = hasRequestedTripAccess(trip, authUser);
+            const nextPlan = getNextPlan(trip);
 
             return (
             <Card
@@ -454,7 +470,7 @@ export default function TripOverview() {
               tabIndex={tripCanView ? 0 : -1}
             >
               <CardContent sx={{ p: 2.5 }}>
-                <Stack spacing={2}>
+                <Stack className="trip-card-content" spacing={2}>
                   <Stack direction="row" spacing={1.5} sx={{ justifyContent: "space-between", gap: 2 }}>
                     <Box sx={{ minWidth: 0 }}>
                       <Typography variant="h6" sx={{ fontWeight: 900 }}>
@@ -506,9 +522,18 @@ export default function TripOverview() {
                       <Typography variant="caption" sx={{ color: "var(--muted)" }}>
                         Next stop
                       </Typography>
-                      <Typography sx={{ fontWeight: 800 }}>
-                        {tripCanView ? trip.plans[0]?.place ?? "No stops yet" : "Request access"}
-                      </Typography>
+                      {tripCanView && nextPlan ? (
+                        <>
+                          <Typography sx={{ fontWeight: 800 }}>{nextPlan.place}</Typography>
+                          <Typography variant="caption" sx={{ color: "var(--muted)" }}>
+                            {nextPlan.day} · {nextPlan.time}
+                          </Typography>
+                        </>
+                      ) : (
+                        <Typography sx={{ fontWeight: 800 }}>
+                          {tripCanView ? "No stops yet" : "Request access"}
+                        </Typography>
+                      )}
                     </Box>
                   </Box>
 
@@ -536,30 +561,32 @@ export default function TripOverview() {
                       : `This trip is private. Host: ${trip.hostUserName || trip.users[0] || "Unknown"}.`}
                   </Typography>
 
-                  {tripCanView ? (
-                    <Button
-                      component={Link}
-                      href={`/trip/${trip.id}`}
-                      variant="contained"
-                      className="travel-primary-button"
-                      sx={{ width: { xs: "100%", sm: "auto" } }}
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      Open Trip
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outlined"
-                      sx={{ width: { xs: "100%", sm: "auto" } }}
-                      disabled={tripRequested}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleRequestJoinTrip(trip);
-                      }}
-                    >
-                      {tripRequested ? "Request Sent" : "Request to Join"}
-                    </Button>
-                  )}
+                  <Box className="trip-card-action">
+                    {tripCanView ? (
+                      <Button
+                        component={Link}
+                        href={`/trip/${trip.id}`}
+                        variant="contained"
+                        className="travel-primary-button"
+                        sx={{ width: { xs: "100%", sm: "auto" } }}
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        Open Trip
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outlined"
+                        sx={{ width: { xs: "100%", sm: "auto" } }}
+                        disabled={tripRequested}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleRequestJoinTrip(trip);
+                        }}
+                      >
+                        {tripRequested ? "Request Sent" : "Request to Join"}
+                      </Button>
+                    )}
+                  </Box>
                 </Stack>
               </CardContent>
             </Card>

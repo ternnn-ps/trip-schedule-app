@@ -236,8 +236,18 @@ class ReportRenderer {
     const contentWidth = width - 122;
     const titleHeight = Math.min(wrapLines(this.ctx, plan.place, contentWidth - (plan.completed ? 86 : 0), 17, 900).length, 2) * 22;
     const detailHeight = wrapLines(this.ctx, plan.detail, contentWidth, 14, 500).length * 20;
-    const hasMapLine = Boolean(plan.latitude || plan.longitude || plan.googleMapUrl);
-    const height = 30 + titleHeight + 11 + detailHeight + (hasMapLine ? 31 : 0) + 19;
+    const hasCoordinates = Boolean(plan.latitude || plan.longitude);
+    const mapUrl = plan.googleMapUrl || (hasCoordinates
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${plan.latitude},${plan.longitude}`)}`
+      : "");
+    const locationLabel = plan.locationName ? `Pinned location: ${plan.locationName}` : "Pinned location";
+    const locationLabelHeight = hasCoordinates
+      ? Math.min(wrapLines(this.ctx, locationLabel, contentWidth, 12, 800).length, 2) * 17
+      : 0;
+    const mapSectionHeight = hasCoordinates || mapUrl
+      ? 12 + (hasCoordinates ? locationLabelHeight + 17 : 0) + (hasCoordinates && mapUrl ? 6 : 0) + (mapUrl ? 18 : 0)
+      : 0;
+    const height = 30 + titleHeight + 11 + detailHeight + mapSectionHeight + 19;
     const accent = plan.completed ? "#94a3b8" : "#2563eb";
 
     this.ensureSpace(height + 14);
@@ -271,28 +281,36 @@ class ReportRenderer {
       color: plan.completed ? "#64748b" : "#334155",
     });
 
-    if (hasMapLine) {
-      const lineY = this.y + height - 31;
-      let linkX = contentX;
+    if (hasCoordinates || mapUrl) {
+      let mapY = this.y + 30 + titleHeight + 11 + detailHeight + 12;
 
-      if (plan.latitude || plan.longitude) {
-        const mapText = "Pinned location";
-        drawText(this.ctx, mapText, contentX, lineY, {
+      if (hasCoordinates) {
+        drawWrappedText(this.ctx, locationLabel, contentX, mapY, contentWidth, 17, {
           size: 12,
+          weight: 800,
+          color: "#64748b",
+          maxLines: 2,
+        });
+        mapY += locationLabelHeight;
+        drawText(this.ctx, `Lat ${plan.latitude || "-"} · Lng ${plan.longitude || "-"}`, contentX, mapY, {
+          size: 11,
           weight: 700,
           color: "#64748b",
         });
-        linkX += textWidth(this.ctx, mapText, 12, 700) + 18;
+        mapY += 17;
       }
 
-      if (plan.googleMapUrl) {
+      if (mapUrl) {
+        if (hasCoordinates) {
+          mapY += 6;
+        }
         const linkLabel = "View on Google Maps";
-        drawText(this.ctx, linkLabel, linkX, lineY, {
+        drawText(this.ctx, linkLabel, contentX, mapY, {
           size: 12,
           weight: 800,
           color: "#2563eb",
         });
-        this.addLink(linkX, lineY - 2, textWidth(this.ctx, linkLabel, 12, 800), 18, plan.googleMapUrl);
+        this.addLink(contentX, mapY - 2, textWidth(this.ctx, linkLabel, 12, 800), 18, mapUrl);
       }
     }
 
