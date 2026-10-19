@@ -898,8 +898,14 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                                 </Box>
                               ) : null}
                             </Box>
-                            <Stack className="plan-card-time-actions" direction="row" spacing={1} sx={{ flexShrink: 0, alignItems: "center", justifyContent: { xs: "flex-end", sm: "flex-start" }, order: { xs: -1, sm: 0 } }}>
-                              <Chip className="plan-time-chip" icon={<AccessTimeIcon />} label={plan.time} size="small" />
+                            <Stack className="plan-card-time-actions" direction="row" spacing={1} sx={{ flexShrink: 0, alignItems: "center", justifyContent: { xs: "space-between", sm: "flex-start" }, order: { xs: -1, sm: 0 } }}>
+                              <Box className="plan-time-block">
+                                <Typography className="plan-time-label">Time</Typography>
+                                <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                                  <AccessTimeIcon className="plan-time-icon" />
+                                  <Typography className="plan-time-value">{plan.time}</Typography>
+                                </Stack>
+                              </Box>
                               {canEditCurrentTrip ? (
                                 <IconButton
                                   aria-label={`Plan actions for ${plan.place}`}

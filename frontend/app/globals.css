@@ -406,22 +406,29 @@ html[data-theme="dark"] .sidebar-shell {
   white-space: nowrap;
 }
 
-.plan-time-chip {
-  height: 38px !important;
-  border: 1px solid rgba(37, 99, 235, 0.2) !important;
-  border-radius: 8px !important;
-  background: rgba(37, 99, 235, 0.08) !important;
-  color: var(--accent-strong) !important;
+.plan-time-block {
+  display: grid;
+  gap: 2px;
+}
+
+.plan-time-label {
+  color: var(--muted);
+  font-size: 0.68rem !important;
   font-weight: 900 !important;
+  letter-spacing: 0.06em;
+  line-height: 1 !important;
+  text-transform: uppercase;
 }
 
-.plan-time-chip .MuiChip-label {
-  padding-inline: 10px !important;
-  font-size: 1rem !important;
+.plan-time-value {
+  color: var(--accent-strong);
+  font-size: 1.1rem !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
 }
 
-.plan-time-chip .MuiChip-icon {
-  color: var(--accent) !important;
+.plan-time-icon {
+  color: var(--accent);
   font-size: 1.1rem !important;
 }
 
