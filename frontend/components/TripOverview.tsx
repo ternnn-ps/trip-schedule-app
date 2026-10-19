@@ -53,7 +53,6 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, KeyboardEvent, useEffect, useState, useSyncExternalStore } from "react";
 import CloseIcon from "@mui/icons-material/Close";
@@ -561,19 +560,8 @@ export default function TripOverview() {
                       : `This trip is private. Host: ${trip.hostUserName || trip.users[0] || "Unknown"}.`}
                   </Typography>
 
-                  <Box className="trip-card-action">
-                    {tripCanView ? (
-                      <Button
-                        component={Link}
-                        href={`/trip/${trip.id}`}
-                        variant="contained"
-                        className="travel-primary-button"
-                        sx={{ width: { xs: "100%", sm: "auto" } }}
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        Open Trip
-                      </Button>
-                    ) : (
+                  {!tripCanView ? (
+                    <Box className="trip-card-action">
                       <Button
                         variant="outlined"
                         sx={{ width: { xs: "100%", sm: "auto" } }}
@@ -585,8 +573,8 @@ export default function TripOverview() {
                       >
                         {tripRequested ? "Request Sent" : "Request to Join"}
                       </Button>
-                    )}
-                  </Box>
+                    </Box>
+                  ) : null}
                 </Stack>
               </CardContent>
             </Card>
