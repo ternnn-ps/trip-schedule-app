@@ -47,8 +47,8 @@ const TRIP_REFRESH_INTERVAL_MS = Number.isFinite(configuredTripRefreshInterval)
   : 45_000;
 const configuredKeepAliveInterval = Number(process.env.NEXT_PUBLIC_KEEP_ALIVE_INTERVAL_MS);
 const KEEP_ALIVE_INTERVAL_MS = Number.isFinite(configuredKeepAliveInterval)
-  ? Math.max(5 * 60 * 1000, configuredKeepAliveInterval)
-  : 60 * 60 * 1000;
+  ? Math.max(60_000, configuredKeepAliveInterval)
+  : 4 * 60 * 1000;
 const READ_NOTIFICATION_VISIBLE_MS = 24 * 60 * 60 * 1000;
 
 const lightTheme = createTheme({

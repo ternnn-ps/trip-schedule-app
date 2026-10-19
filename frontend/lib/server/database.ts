@@ -11,7 +11,10 @@ const globalForDatabase = globalThis as unknown as { travelDatabasePool?: Pool }
 export const database = globalForDatabase.travelDatabasePool ?? new Pool({
   connectionString,
   ssl: connectionString ? { rejectUnauthorized: false } : undefined,
-  max: 5,
+  max: 1,
+  connectionTimeoutMillis: 12_000,
+  idleTimeoutMillis: 30_000,
+  allowExitOnIdle: true,
 });
 
 if (process.env.NODE_ENV !== "production") {

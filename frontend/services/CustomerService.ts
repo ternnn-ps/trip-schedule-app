@@ -5,9 +5,9 @@ import {
   PageResponse,
   ResponseModel,
 } from "@/types/customer";
+import { API_BASE_URL, API_TIMEOUT_MS } from "@/services/apiConfig";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
-const API_TIMEOUT_MS = 5000;
+const BASE_URL = API_BASE_URL;
 
 export const CUSTOMER_API_PATH = {
   search: "/customer/search",

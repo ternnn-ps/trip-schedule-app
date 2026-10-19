@@ -1,8 +1,8 @@
 import { PageResponse, ResponseModel, User, UserCriteria } from "@/types/user";
+import { API_BASE_URL, API_TIMEOUT_MS } from "@/services/apiConfig";
 import axios from "axios";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
-const API_TIMEOUT_MS = 5000;
+const BASE_URL = API_BASE_URL;
 
 export const USER_API_PATH = {
   search: "/user/search",

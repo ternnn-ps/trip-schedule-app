@@ -199,18 +199,29 @@ export async function syncTripsFromBackend() {
     return;
   }
 
-  try {
-    const response = await tripService.search("", 0, 100, [{ field: "name", order: 1 }]);
+  let lastError: unknown;
 
-    if (!response?.result) {
-      console.error("Trip backend search failed:", response?.msgDetail);
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const response = await tripService.search("", 0, 100, [{ field: "name", order: 1 }]);
+
+      if (!response?.result) {
+        console.error("Trip backend search failed:", response?.msgDetail);
+        return;
+      }
+
+      saveTrips((response.body?.content ?? []).map(normalizeTrip));
       return;
-    }
+    } catch (error) {
+      lastError = error;
 
-    saveTrips((response.body?.content ?? []).map(normalizeTrip));
-  } catch (error) {
-    console.error("Trip backend search failed:", error);
+      if (attempt === 0) {
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 750));
+      }
+    }
   }
+
+  console.error("Trip backend search failed:", lastError);
 }
 
 export function subscribeTrips(onStoreChange: () => void) {

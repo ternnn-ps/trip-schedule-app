@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { apiError, failed, hasText, success } from "@/lib/server/api-response";
+import { query } from "@/lib/server/database";
 import {
   addTripPlan,
   addTripUser,
@@ -53,7 +54,10 @@ export async function GET(request: NextRequest, context: Context) {
   try {
     const { path } = await context.params;
     const search = request.nextUrl.searchParams;
-    if (path.join("/") === "ping") return new NextResponse("OK", { headers: { "content-type": "text/plain" } });
+    if (path.join("/") === "ping") {
+      await query("SELECT 1");
+      return new NextResponse("OK", { headers: { "content-type": "text/plain" } });
+    }
     if (path.join("/") === "user/search") return success(await searchUsers(search.get("keyword")?.trim() ?? "", numberParam(search.get("page"), 0), numberParam(search.get("size"), 10), sortParams(search)));
     if (path.join("/") === "customer/search") return success(await searchCustomers(search.get("keyword")?.trim() ?? "", numberParam(search.get("page"), 0), numberParam(search.get("size"), 10)));
     if (path.join("/") === "trip/search") return success(await searchTrips(search.get("keyword")?.trim() ?? "", numberParam(search.get("page"), 0), numberParam(search.get("size"), 10)));
