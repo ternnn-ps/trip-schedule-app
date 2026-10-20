@@ -649,6 +649,10 @@ html[data-theme="dark"] .sidebar-shell {
   gap: 8px;
 }
 
+.plan-place-panel {
+  width: 100%;
+}
+
 .plan-map-actions .MuiButton-root {
   min-width: 0;
   white-space: nowrap;

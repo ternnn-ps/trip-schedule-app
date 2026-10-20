@@ -833,70 +833,6 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                               <Typography className="plan-content-text plan-detail" sx={{ color: "var(--muted)", whiteSpace: "pre-line" }}>
                                 {plan.detail}
                               </Typography>
-                              {plan.latitude && plan.longitude ? (
-                                <Box className="plan-place-panel" sx={{ mt: 1.5 }}>
-                                  <LocationPicker
-                                    latitude={plan.latitude}
-                                    longitude={plan.longitude}
-                                    readOnly
-                                  />
-                                  <Stack
-                                    className="plan-map-actions"
-                                    direction="row"
-                                    spacing={0}
-                                    sx={{ flexWrap: "wrap", mt: 1 }}
-                                  >
-                                    <Button
-                                      component="a"
-                                      href={googleMapUrl}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      startIcon={<MapIcon />}
-                                      size="small"
-                                      sx={{ px: 0 }}
-                                    >
-                                      Open map
-                                    </Button>
-                                    {plan.googleMapUrl ? (
-                                      <Button
-                                        component="a"
-                                        href={googleMapUrl}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        startIcon={<ImageIcon />}
-                                        size="small"
-                                        sx={{ px: 0 }}
-                                      >
-                                        Photo & Review
-                                      </Button>
-                                    ) : null}
-                                  </Stack>
-                                </Box>
-                              ) : plan.googleMapUrl ? (
-                                <Box className="plan-place-panel" sx={{ mt: 1.5 }}>
-                                  <Typography sx={{ color: "var(--muted)", fontSize: "0.88rem" }}>
-                                    Google Maps details are linked for this stop.
-                                  </Typography>
-                                  <Stack
-                                    className="plan-map-actions"
-                                    direction="row"
-                                    spacing={0}
-                                    sx={{ flexWrap: "wrap", mt: 1 }}
-                                  >
-                                    <Button
-                                      component="a"
-                                      href={googleMapUrl}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      startIcon={<ImageIcon />}
-                                      size="small"
-                                      sx={{ px: 0 }}
-                                    >
-                                      Photo & Review
-                                    </Button>
-                                  </Stack>
-                                </Box>
-                              ) : null}
                             </Box>
                             <Stack className="plan-card-time-actions" direction="row" spacing={1} sx={{ flexShrink: 0, alignItems: "center", justifyContent: { xs: "space-between", sm: "flex-start" }, order: { xs: -1, sm: 0 } }}>
                               <Box className="plan-time-block">
@@ -918,6 +854,70 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                               ) : null}
                             </Stack>
                           </Stack>
+                          {plan.latitude && plan.longitude ? (
+                            <Box className="plan-place-panel">
+                              <LocationPicker
+                                latitude={plan.latitude}
+                                longitude={plan.longitude}
+                                readOnly
+                              />
+                              <Stack
+                                className="plan-map-actions"
+                                direction="row"
+                                spacing={0}
+                                sx={{ flexWrap: "wrap", mt: 1 }}
+                              >
+                                <Button
+                                  component="a"
+                                  href={googleMapUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  startIcon={<MapIcon />}
+                                  size="small"
+                                  sx={{ px: 0 }}
+                                >
+                                  Open map
+                                </Button>
+                                {plan.googleMapUrl ? (
+                                  <Button
+                                    component="a"
+                                    href={googleMapUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    startIcon={<ImageIcon />}
+                                    size="small"
+                                    sx={{ px: 0 }}
+                                  >
+                                    Photo & Review
+                                  </Button>
+                                ) : null}
+                              </Stack>
+                            </Box>
+                          ) : plan.googleMapUrl ? (
+                            <Box className="plan-place-panel">
+                              <Typography sx={{ color: "var(--muted)", fontSize: "0.88rem" }}>
+                                Google Maps details are linked for this stop.
+                              </Typography>
+                              <Stack
+                                className="plan-map-actions"
+                                direction="row"
+                                spacing={0}
+                                sx={{ flexWrap: "wrap", mt: 1 }}
+                              >
+                                <Button
+                                  component="a"
+                                  href={googleMapUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  startIcon={<ImageIcon />}
+                                  size="small"
+                                  sx={{ px: 0 }}
+                                >
+                                  Photo & Review
+                                </Button>
+                              </Stack>
+                            </Box>
+                          ) : null}
                         </Stack>
                       </CardContent>
                     </Card>
