@@ -36,6 +36,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import DownloadIcon from "@mui/icons-material/Download";
 import EditIcon from "@mui/icons-material/Edit";
 import ImageIcon from "@mui/icons-material/Image";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import MapIcon from "@mui/icons-material/Map";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -49,6 +50,7 @@ import {
   Card,
   CardContent,
   Chip,
+  Collapse,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -124,6 +126,10 @@ function comparePlansByDayAndTime(first: TripPlanItem, second: TripPlanItem) {
   return first.time.localeCompare(second.time) || first.place.localeCompare(second.place);
 }
 
+function getDaySectionId(day: string) {
+  return `itinerary-${day.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+}
+
 function getUserDisplayName(user: User) {
   return user.userFullName?.trim() || user.userName?.trim() || user.email?.trim() || "Unnamed user";
 }
@@ -175,6 +181,8 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
   const [userLocationDialog, setUserLocationDialog] = useState<UserLocationDialogState>(null);
   const [error, setError] = useState("");
   const [mapUrlMessage, setMapUrlMessage] = useState("");
+  const [collapsedDays, setCollapsedDays] = useState<string[]>([]);
+  const [activeItineraryDay, setActiveItineraryDay] = useState("");
 
   useEffect(() => {
     void syncTripsFromBackend();
@@ -283,6 +291,20 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
     setError("");
     setMapUrlMessage("");
     setPlanDialogOpen(true);
+  }
+
+  function toggleDaySection(day: string) {
+    setCollapsedDays((currentDays) => (
+      currentDays.includes(day)
+        ? currentDays.filter((currentDay) => currentDay !== day)
+        : [...currentDays, day]
+    ));
+  }
+
+  function navigateToDay(day: string) {
+    setActiveItineraryDay(day);
+    setCollapsedDays((currentDays) => currentDays.filter((currentDay) => currentDay !== day));
+    document.getElementById(getDaySectionId(day))?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function openEditPlanDialog(plan: TripPlanItem) {
@@ -583,6 +605,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
     groups[plan.day] = [...(groups[plan.day] ?? []), plan];
     return groups;
   }, {});
+  const itineraryDays = Object.entries(plansByDay);
   const tripDurationDays = getTripDurationDays(trip.dateRange);
   const dayOptions = Array.from(
     { length: tripDurationDays ?? 14 },
@@ -797,13 +820,53 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
             </Stack>
           </Box>
 
+          {itineraryDays.length > 0 ? (
+            <Stack className="itinerary-day-nav" direction="row" spacing={1}>
+              {itineraryDays.map(([day, dayPlans], index) => {
+                const isActive = activeItineraryDay ? activeItineraryDay === day : index === 0;
+
+                return (
+                  <Button
+                    key={day}
+                    className="itinerary-day-nav-button"
+                    variant={isActive ? "contained" : "outlined"}
+                    onClick={() => navigateToDay(day)}
+                  >
+                    <Box>
+                      <Typography component="span" className="itinerary-day-nav-title">{day}</Typography>
+                      <Typography component="span" className="itinerary-day-nav-count">
+                        {dayPlans.length} {dayPlans.length === 1 ? "stop" : "stops"}
+                      </Typography>
+                    </Box>
+                  </Button>
+                );
+              })}
+            </Stack>
+          ) : null}
+
           <Stack spacing={2.5} sx={{ mt: 2 }}>
-            {Object.entries(plansByDay).map(([day, dayPlans]) => (
-              <Box key={day} className="day-section">
-                <Typography variant="subtitle1" sx={{ fontWeight: 900, mb: 1.5 }}>
-                  {day}
-                </Typography>
-                <Stack spacing={1.5}>
+            {itineraryDays.map(([day, dayPlans]) => {
+              const isCollapsed = collapsedDays.includes(day);
+
+              return (
+              <Box key={day} id={getDaySectionId(day)} className={`day-section${isCollapsed ? " is-collapsed" : ""}`}>
+                <Button
+                  className="day-section-toggle"
+                  aria-expanded={!isCollapsed}
+                  onClick={() => toggleDaySection(day)}
+                >
+                  <Stack direction="row" sx={{ width: "100%", alignItems: "center", justifyContent: "space-between", gap: 1.5 }}>
+                    <Box sx={{ textAlign: "left" }}>
+                      <Typography component="span" className="day-section-title">{day}</Typography>
+                      <Typography component="span" className="day-section-count">
+                        {dayPlans.length} {dayPlans.length === 1 ? "stop" : "stops"}
+                      </Typography>
+                    </Box>
+                    <KeyboardArrowDownIcon className={`day-section-toggle-icon${isCollapsed ? " is-collapsed" : ""}`} />
+                  </Stack>
+                </Button>
+                <Collapse in={!isCollapsed} timeout="auto">
+                  <Stack className="day-section-content" spacing={1.5}>
                   {dayPlans.map((plan) => {
                     const googleMapUrl = getGoogleMapUrl(plan);
 
@@ -923,9 +986,11 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                     </Card>
                     );
                   })}
-                </Stack>
+                  </Stack>
+                </Collapse>
               </Box>
-            ))}
+              );
+            })}
 
             {trip.plans.length === 0 ? (
               <Box className="travel-empty-state">

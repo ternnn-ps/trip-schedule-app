@@ -644,6 +644,43 @@ html[data-theme="dark"] .sidebar-shell {
   white-space: nowrap;
 }
 
+.itinerary-day-nav {
+  width: 100%;
+  margin-top: 18px;
+  overflow-x: auto;
+  padding: 2px 1px 8px;
+  scrollbar-width: thin;
+}
+
+.itinerary-day-nav-button {
+  min-width: 92px !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  text-align: left !important;
+  text-transform: none !important;
+}
+
+.itinerary-day-nav-title,
+.itinerary-day-nav-count,
+.day-section-title,
+.day-section-count {
+  display: block;
+}
+
+.itinerary-day-nav-title {
+  font-size: 0.82rem !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+}
+
+.itinerary-day-nav-count {
+  margin-top: 2px;
+  opacity: 0.76;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+
 .plan-map-actions {
   align-items: center;
   gap: 8px;
@@ -766,8 +803,51 @@ html[data-theme="dark"] .sidebar-shell {
 }
 
 .day-section {
-  padding-left: 14px;
-  border-left: 3px solid rgba(37, 99, 235, 0.22);
+  scroll-margin-top: 84px;
+}
+
+.day-section-toggle {
+  justify-content: flex-start !important;
+  width: 100%;
+  min-height: 58px;
+  padding: 10px 12px !important;
+  border: 1px solid var(--border) !important;
+  border-left: 3px solid rgba(37, 99, 235, 0.55) !important;
+  border-radius: 8px !important;
+  background: var(--panel) !important;
+  color: var(--foreground) !important;
+  text-transform: none !important;
+}
+
+.day-section-toggle:hover {
+  background: rgba(37, 99, 235, 0.07) !important;
+}
+
+.day-section-title {
+  font-size: 1rem !important;
+  font-weight: 900 !important;
+  line-height: 1.2 !important;
+}
+
+.day-section-count {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+
+.day-section-toggle-icon {
+  flex: 0 0 auto;
+  transition: transform 160ms ease;
+}
+
+.day-section-toggle-icon.is-collapsed {
+  transform: rotate(-90deg);
+}
+
+.day-section-content {
+  padding-top: 14px;
 }
 
 .add-user-form {
