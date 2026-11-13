@@ -1007,6 +1007,8 @@ html[data-theme="dark"] .map-preview {
   .overview-summary-content {
     flex-direction: column !important;
     align-items: flex-start !important;
+    justify-content: space-between;
+    min-height: 62px;
     gap: 4px !important;
   }
 
@@ -1028,6 +1030,11 @@ html[data-theme="dark"] .map-preview {
     line-height: 1.15 !important;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .overview-summary-focus-value {
+    font-size: 0.82rem !important;
+    line-height: 1.2 !important;
   }
 
   .trip-calendar-page {

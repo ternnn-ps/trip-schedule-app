@@ -123,6 +123,28 @@ function getNextPlan(trip: Trip) {
   ))[0];
 }
 
+function getUpcomingTrip(trips: Trip[]) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return trips
+    .map((trip) => {
+      const dateRange = parseTripDateRange(trip.dateRange);
+
+      if (!dateRange) {
+        return null;
+      }
+
+      return {
+        trip,
+        startDate: new Date(`${dateRange.startDate}T00:00:00`),
+        endDate: new Date(`${dateRange.endDate}T23:59:59`),
+      };
+    })
+    .filter((item): item is { trip: Trip; startDate: Date; endDate: Date } => Boolean(item && item.endDate >= today))
+    .sort((first, second) => first.startDate.getTime() - second.startDate.getTime())[0]?.trip;
+}
+
 export default function TripOverview() {
   const router = useRouter();
   const trips = useSyncExternalStore(subscribeTrips, getTrips, getTripsServerSnapshot);
@@ -330,7 +352,7 @@ export default function TripOverview() {
 
   const totalPlans = trips.reduce((sum, trip) => sum + trip.plans.length, 0);
   const nextTrip = trips[0];
-  const busiestTrip = [...trips].sort((first, second) => second.plans.length - first.plans.length)[0];
+  const upcomingTrip = getUpcomingTrip(trips);
   const tripMenuOpen = Boolean(tripMenu);
   const userOptions = uniqueNames([
     ...availableUsers.map(getUserDisplayName),
@@ -396,8 +418,8 @@ export default function TripOverview() {
                   <Typography className="overview-summary-label" variant="overline" sx={{ color: "var(--muted)" }}>
                     Focus
                   </Typography>
-                  <Typography className="overview-summary-value" sx={{ fontWeight: 900 }}>
-                    {busiestTrip?.destination ?? "Create a trip"}
+                  <Typography className="overview-summary-value overview-summary-focus-value" sx={{ fontWeight: 900 }}>
+                    {upcomingTrip?.destination ?? "No upcoming trip"}
                   </Typography>
                 </Box>
               </Stack>
