@@ -301,6 +301,7 @@ html[data-theme="dark"] .sidebar-shell {
 
 .trip-grid {
   grid-template-columns: 1fr;
+  align-items: start;
 }
 
 .planner-grid {
@@ -350,7 +351,7 @@ html[data-theme="dark"] .sidebar-shell {
 
 .travel-trip-card {
   display: flex;
-  height: 100%;
+  height: auto;
 }
 
 .travel-trip-card .MuiCardContent-root {
@@ -359,7 +360,7 @@ html[data-theme="dark"] .sidebar-shell {
 }
 
 .trip-card-content {
-  flex: 1;
+  flex: initial;
 }
 
 .trip-card-action {
@@ -795,11 +796,44 @@ html[data-theme="dark"] .sidebar-shell {
 
 .trip-note {
   display: -webkit-box;
-  min-height: 48px;
   overflow: hidden;
   color: var(--muted);
+  font-size: 0.88rem !important;
+  line-height: 1.45 !important;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+.trip-card-header {
+  align-items: flex-start;
+}
+
+.trip-card-destination {
+  overflow: hidden;
+  font-size: 0.9rem !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trip-card-meta {
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.trip-card-meta .MuiTypography-root {
+  overflow-wrap: anywhere;
+}
+
+.trip-card-members .MuiChip-root {
+  max-width: 132px;
+}
+
+.trip-card-members .MuiChip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .day-section {
@@ -1231,5 +1265,11 @@ html[data-theme="dark"] .map-preview {
 @media (min-width: 1180px) {
   .planner-grid {
     grid-template-columns: 360px minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 1450px) {
+  .trip-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

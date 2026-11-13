@@ -42,7 +42,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   FormControlLabel,
   IconButton,
   Menu,
@@ -468,14 +467,14 @@ export default function TripOverview() {
               role={tripCanView ? "button" : undefined}
               tabIndex={tripCanView ? 0 : -1}
             >
-              <CardContent sx={{ p: 2.5 }}>
-                <Stack className="trip-card-content" spacing={2}>
-                  <Stack direction="row" spacing={1.5} sx={{ justifyContent: "space-between", gap: 2 }}>
+              <CardContent sx={{ p: 2 }}>
+                <Stack className="trip-card-content" spacing={1.25}>
+                  <Stack className="trip-card-header" direction="row" spacing={1.5} sx={{ justifyContent: "space-between", gap: 2 }}>
                     <Box sx={{ minWidth: 0 }}>
                       <Typography variant="h6" sx={{ fontWeight: 900 }}>
                         {trip.name}
                       </Typography>
-                      <Typography sx={{ color: "var(--muted)" }}>{trip.destination}</Typography>
+                      <Typography className="trip-card-destination" sx={{ color: "var(--muted)" }}>{trip.destination}</Typography>
                     </Box>
                     <Stack direction="row" spacing={0.75} sx={{ alignItems: "flex-start" }}>
                       {tripCanView ? (
@@ -508,9 +507,7 @@ export default function TripOverview() {
                     </Stack>
                   </Stack>
 
-                  <Divider />
-
-                  <Box className="trip-meta-grid">
+                  <Box className="trip-meta-grid trip-card-meta">
                     <Box>
                       <Typography variant="caption" sx={{ color: "var(--muted)" }}>
                         Dates
@@ -536,7 +533,7 @@ export default function TripOverview() {
                     </Box>
                   </Box>
 
-                  <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+                  <Stack className="trip-card-members" direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: "wrap" }}>
                     {trip.allUsers ? (
                       <Chip label="All users" size="small" color="primary" variant="outlined" />
                     ) : trip.users.length > 0 ? (
@@ -554,11 +551,13 @@ export default function TripOverview() {
                     ) : null}
                   </Stack>
 
-                  <Typography className="trip-note">
-                    {tripCanView
-                      ? trip.notes || "Open this trip to start planning the schedule."
-                      : `This trip is private. Host: ${trip.hostUserName || trip.users[0] || "Unknown"}.`}
-                  </Typography>
+                  {tripCanView ? (
+                    trip.notes ? <Typography className="trip-note">{trip.notes}</Typography> : null
+                  ) : (
+                    <Typography className="trip-note">
+                      {`This trip is private. Host: ${trip.hostUserName || trip.users[0] || "Unknown"}.`}
+                    </Typography>
+                  )}
 
                   {!tripCanView ? (
                     <Box className="trip-card-action">
