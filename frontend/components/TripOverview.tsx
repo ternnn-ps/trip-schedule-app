@@ -380,55 +380,55 @@ export default function TripOverview() {
         <Box className="summary-grid overview-summary-grid">
           <Card className="travel-stat-card overview-summary-card">
             <CardContent>
-              <Stack className="overview-summary-content" direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                <Box className="overview-summary-icon">
-                  <RouteIcon color="primary" />
-                </Box>
-                <Box>
+              <Box className="overview-summary-content">
+                <Stack className="overview-summary-label-row" direction="row" spacing={0.75}>
+                  <Box className="overview-summary-icon">
+                    <RouteIcon color="primary" />
+                  </Box>
                   <Typography className="overview-summary-label" variant="overline" sx={{ color: "var(--muted)" }}>
                     Trips
                   </Typography>
-                  <Typography className="overview-summary-value" variant="h4" sx={{ fontWeight: 900 }}>
-                    {trips.length}
-                  </Typography>
-                </Box>
-              </Stack>
+                </Stack>
+                <Typography className="overview-summary-value" variant="h4" sx={{ fontWeight: 900 }}>
+                  {trips.length}
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
 
           <Card className="travel-stat-card overview-summary-card">
             <CardContent>
-              <Stack className="overview-summary-content" direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                <Box className="overview-summary-icon">
-                  <CalendarMonthIcon color="primary" />
-                </Box>
-                <Box>
+              <Box className="overview-summary-content">
+                <Stack className="overview-summary-label-row" direction="row" spacing={0.75}>
+                  <Box className="overview-summary-icon">
+                    <CalendarMonthIcon color="primary" />
+                  </Box>
                   <Typography className="overview-summary-label" variant="overline" sx={{ color: "var(--muted)" }}>
                     Plans
                   </Typography>
-                  <Typography className="overview-summary-value" variant="h4" sx={{ fontWeight: 900 }}>
-                    {totalPlans}
-                  </Typography>
-                </Box>
-              </Stack>
+                </Stack>
+                <Typography className="overview-summary-value" variant="h4" sx={{ fontWeight: 900 }}>
+                  {totalPlans}
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
 
           <Card className="travel-stat-card overview-summary-card">
             <CardContent>
-              <Stack className="overview-summary-content" direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                <Box className="overview-summary-icon">
-                  <LocationOnIcon color="primary" />
-                </Box>
-                <Box>
+              <Box className="overview-summary-content">
+                <Stack className="overview-summary-label-row" direction="row" spacing={0.75}>
+                  <Box className="overview-summary-icon">
+                    <LocationOnIcon color="primary" />
+                  </Box>
                   <Typography className="overview-summary-label" variant="overline" sx={{ color: "var(--muted)" }}>
                     Focus
                   </Typography>
-                  <Typography className="overview-summary-value overview-summary-focus-value" sx={{ fontWeight: 900 }}>
-                    {upcomingTrip?.destination ?? "No upcoming trip"}
-                  </Typography>
-                </Box>
-              </Stack>
+                </Stack>
+                <Typography className="overview-summary-value overview-summary-focus-value" sx={{ fontWeight: 900 }}>
+                  {upcomingTrip?.destination ?? "No upcoming trip"}
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
         </Box>
