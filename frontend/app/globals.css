@@ -1023,17 +1023,31 @@ html[data-theme="dark"] .map-preview {
   }
 
   .overview-summary-content {
-    display: block !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 7px !important;
     width: 100%;
     min-height: 0;
   }
 
   .overview-summary-icon {
-    display: none;
+    display: grid;
+    width: 26px;
+    height: 26px;
+    flex: 0 0 26px;
+    border-radius: 7px;
   }
 
-  .overview-summary-content > .MuiBox-root {
+  .overview-summary-icon .MuiSvgIcon-root {
+    display: block;
+    font-size: 1rem;
+  }
+
+  .overview-summary-content > .MuiBox-root:not(.overview-summary-icon) {
     display: grid;
+    flex: 1;
+    min-width: 0;
     gap: 4px;
   }
 
