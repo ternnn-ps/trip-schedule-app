@@ -1071,14 +1071,14 @@ html[data-theme="dark"] .map-preview {
     display: block;
     overflow: hidden;
     max-width: 100%;
-    font-size: 1.2rem !important;
+    font-size: 1.45rem !important;
     line-height: 1.15 !important;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .overview-summary-focus-value {
-    font-size: 0.82rem !important;
+    font-size: 1rem !important;
     line-height: 1.2 !important;
   }
 
