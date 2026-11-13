@@ -381,7 +381,9 @@ export default function TripOverview() {
           <Card className="travel-stat-card overview-summary-card">
             <CardContent>
               <Stack className="overview-summary-content" direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                <RouteIcon color="primary" />
+                <Box className="overview-summary-icon">
+                  <RouteIcon color="primary" />
+                </Box>
                 <Box>
                   <Typography className="overview-summary-label" variant="overline" sx={{ color: "var(--muted)" }}>
                     Trips
@@ -397,7 +399,9 @@ export default function TripOverview() {
           <Card className="travel-stat-card overview-summary-card">
             <CardContent>
               <Stack className="overview-summary-content" direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                <CalendarMonthIcon color="primary" />
+                <Box className="overview-summary-icon">
+                  <CalendarMonthIcon color="primary" />
+                </Box>
                 <Box>
                   <Typography className="overview-summary-label" variant="overline" sx={{ color: "var(--muted)" }}>
                     Plans
@@ -413,7 +417,9 @@ export default function TripOverview() {
           <Card className="travel-stat-card overview-summary-card">
             <CardContent>
               <Stack className="overview-summary-content" direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-                <LocationOnIcon color="primary" />
+                <Box className="overview-summary-icon">
+                  <LocationOnIcon color="primary" />
+                </Box>
                 <Box>
                   <Typography className="overview-summary-label" variant="overline" sx={{ color: "var(--muted)" }}>
                     Focus
