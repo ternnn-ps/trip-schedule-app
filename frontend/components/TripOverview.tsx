@@ -468,7 +468,7 @@ export default function TripOverview() {
             </Typography>
           </Box>
           <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
-            <Chip label={`${trips.length} saved`} />
+            <Chip label={`Your trips · ${trips.length}`} />
             <IconButton
               aria-label="Add trip"
               onClick={() => setOpen(true)}
