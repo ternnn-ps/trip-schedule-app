@@ -860,6 +860,11 @@ html[data-theme="dark"] .sidebar-shell {
   align-items: center;
 }
 
+.overview-summary-value {
+  justify-self: end;
+  text-align: right;
+}
+
 .day-section-content {
   position: relative;
   padding-left: 24px;
