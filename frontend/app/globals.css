@@ -836,6 +836,44 @@ html[data-theme="dark"] .sidebar-shell {
   white-space: nowrap;
 }
 
+.day-section-content {
+  position: relative;
+  padding-left: 24px;
+}
+
+.day-section-content::before {
+  position: absolute;
+  top: 18px;
+  bottom: 18px;
+  left: 8px;
+  width: 2px;
+  background: rgba(37, 99, 235, 0.24);
+  content: "";
+}
+
+.itinerary-timeline-item {
+  position: relative;
+}
+
+.itinerary-timeline-item::before {
+  position: absolute;
+  z-index: 2;
+  top: 18px;
+  left: -22px;
+  width: 12px;
+  height: 12px;
+  border: 3px solid var(--panel-strong);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.32);
+  content: "";
+}
+
+.itinerary-timeline-item .travel-plan-card {
+  position: relative;
+  z-index: 1;
+}
+
 .day-section {
   scroll-margin-top: 84px;
 }
@@ -957,6 +995,41 @@ html[data-theme="dark"] .map-preview {
 }
 
 @media (max-width: 699px) {
+  .overview-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .overview-summary-card .MuiCardContent-root {
+    padding: 10px !important;
+  }
+
+  .overview-summary-content {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+  }
+
+  .overview-summary-content .MuiSvgIcon-root {
+    font-size: 1.2rem;
+  }
+
+  .overview-summary-label {
+    display: block;
+    font-size: 0.62rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .overview-summary-value {
+    display: block;
+    overflow: hidden;
+    max-width: 100%;
+    font-size: 1.25rem !important;
+    line-height: 1.15 !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .trip-calendar-page {
     gap: 12px;
   }
@@ -1059,6 +1132,18 @@ html[data-theme="dark"] .map-preview {
 
   .plan-detail {
     font-size: 0.95rem !important;
+  }
+
+  .day-section-content {
+    padding-left: 20px;
+  }
+
+  .day-section-content::before {
+    left: 7px;
+  }
+
+  .itinerary-timeline-item::before {
+    left: -18px;
   }
 
   .travel-trip-card .MuiCardContent-root,

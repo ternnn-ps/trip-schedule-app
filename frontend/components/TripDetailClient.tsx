@@ -871,7 +871,8 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                     const googleMapUrl = getGoogleMapUrl(plan);
 
                     return (
-                    <Card key={plan.id} className={`travel-plan-card${plan.completed ? " completed" : ""}`}>
+                    <Box key={plan.id} className="itinerary-timeline-item">
+                    <Card className={`travel-plan-card${plan.completed ? " completed" : ""}`}>
                       <CardContent sx={{ p: 2.25 }}>
                         <Stack spacing={1.5}>
                           <Stack className="plan-card-header" direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { xs: "stretch", sm: "flex-start" }, justifyContent: "space-between" }}>
@@ -984,6 +985,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                         </Stack>
                       </CardContent>
                     </Card>
+                    </Box>
                     );
                   })}
                   </Stack>

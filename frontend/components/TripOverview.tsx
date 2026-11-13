@@ -355,16 +355,16 @@ export default function TripOverview() {
           </Box>
         </Box>
 
-        <Box className="summary-grid">
-          <Card className="travel-stat-card">
+        <Box className="summary-grid overview-summary-grid">
+          <Card className="travel-stat-card overview-summary-card">
             <CardContent>
-              <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+              <Stack className="overview-summary-content" direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
                 <RouteIcon color="primary" />
                 <Box>
-                  <Typography variant="overline" sx={{ color: "var(--muted)" }}>
+                  <Typography className="overview-summary-label" variant="overline" sx={{ color: "var(--muted)" }}>
                     Trips
                   </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 900 }}>
+                  <Typography className="overview-summary-value" variant="h4" sx={{ fontWeight: 900 }}>
                     {trips.length}
                   </Typography>
                 </Box>
@@ -372,15 +372,15 @@ export default function TripOverview() {
             </CardContent>
           </Card>
 
-          <Card className="travel-stat-card">
+          <Card className="travel-stat-card overview-summary-card">
             <CardContent>
-              <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+              <Stack className="overview-summary-content" direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
                 <CalendarMonthIcon color="primary" />
                 <Box>
-                  <Typography variant="overline" sx={{ color: "var(--muted)" }}>
+                  <Typography className="overview-summary-label" variant="overline" sx={{ color: "var(--muted)" }}>
                     Plans
                   </Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 900 }}>
+                  <Typography className="overview-summary-value" variant="h4" sx={{ fontWeight: 900 }}>
                     {totalPlans}
                   </Typography>
                 </Box>
@@ -388,15 +388,15 @@ export default function TripOverview() {
             </CardContent>
           </Card>
 
-          <Card className="travel-stat-card">
+          <Card className="travel-stat-card overview-summary-card">
             <CardContent>
-              <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+              <Stack className="overview-summary-content" direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
                 <LocationOnIcon color="primary" />
                 <Box>
-                  <Typography variant="overline" sx={{ color: "var(--muted)" }}>
+                  <Typography className="overview-summary-label" variant="overline" sx={{ color: "var(--muted)" }}>
                     Focus
                   </Typography>
-                  <Typography sx={{ fontWeight: 900 }}>
+                  <Typography className="overview-summary-value" sx={{ fontWeight: 900 }}>
                     {busiestTrip?.destination ?? "Create a trip"}
                   </Typography>
                 </Box>
