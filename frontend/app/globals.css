@@ -1001,32 +1001,43 @@ html[data-theme="dark"] .map-preview {
   }
 
   .overview-summary-card .MuiCardContent-root {
+    display: flex;
+    align-items: center;
+    min-height: 68px;
     padding: 10px !important;
   }
 
   .overview-summary-content {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    justify-content: space-between;
-    min-height: 62px;
-    gap: 4px !important;
+    display: block !important;
+    width: 100%;
+    min-height: 0;
   }
 
   .overview-summary-content .MuiSvgIcon-root {
-    font-size: 1.2rem;
+    display: none;
+  }
+
+  .overview-summary-content > .MuiBox-root {
+    display: grid;
+    gap: 4px;
   }
 
   .overview-summary-label {
     display: block;
-    font-size: 0.62rem !important;
+    overflow: hidden;
+    font-size: 0.7rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0 !important;
     line-height: 1.1 !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .overview-summary-value {
     display: block;
     overflow: hidden;
     max-width: 100%;
-    font-size: 1.25rem !important;
+    font-size: 1.2rem !important;
     line-height: 1.15 !important;
     text-overflow: ellipsis;
     white-space: nowrap;
