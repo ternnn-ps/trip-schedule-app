@@ -83,6 +83,7 @@ const emptyPlanForm = {
   latitude: "",
   longitude: "",
   googleMapUrl: "",
+  photoUrl: "",
 };
 
 const emptyTripEditForm = {
@@ -146,6 +147,15 @@ function getItineraryDayDate(day: string, dateRange: string) {
     day: "numeric",
     month: "short",
   }).format(date);
+}
+
+function isValidExternalUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
 }
 
 function getUserDisplayName(user: User) {
@@ -340,6 +350,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       latitude: plan.latitude ?? "",
       longitude: plan.longitude ?? "",
       googleMapUrl: plan.googleMapUrl ?? "",
+      photoUrl: plan.photoUrl ?? "",
     });
     setEditingPlanId(plan.id);
     setError("");
@@ -393,6 +404,11 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       return;
     }
 
+    if (form.photoUrl.trim() && !isValidExternalUrl(form.photoUrl.trim())) {
+      setError("Photo URL must start with http:// or https://.");
+      return;
+    }
+
     const planDayNumber = parsePlanDayNumber(form.day);
 
     if (!planDayNumber) {
@@ -416,6 +432,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       latitude: form.latitude.trim(),
       longitude: form.longitude.trim(),
       googleMapUrl: form.googleMapUrl.trim(),
+      photoUrl: form.photoUrl.trim(),
       completed: editingPlanId
         ? Boolean(trip.plans.find((plan) => plan.id === editingPlanId)?.completed)
         : false,
@@ -938,6 +955,26 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                               ) : null}
                             </Stack>
                           </Stack>
+                          {plan.photoUrl ? (
+                            <a
+                              className="plan-photo-link"
+                              href={plan.photoUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              {/* Arbitrary user image hosts cannot be safely preconfigured for next/image. */}
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                className="plan-photo"
+                                src={plan.photoUrl}
+                                alt={`Photo for ${plan.place}`}
+                                loading="lazy"
+                                onError={(event) => {
+                                  event.currentTarget.style.display = "none";
+                                }}
+                              />
+                            </a>
+                          ) : null}
                           {plan.latitude && plan.longitude ? (
                             <Box className="plan-place-panel">
                               <LocationPicker
@@ -1344,6 +1381,16 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                 onChange={(event) => handleGoogleMapUrlChange(event.target.value)}
                 placeholder="Paste Google Maps link"
                 helperText={mapUrlMessage || "Optional. If the URL includes coordinates, the map pin will update automatically."}
+                fullWidth
+                sx={{ mt: 1.5 }}
+              />
+              <TextField
+                label="Photo URL"
+                type="url"
+                value={form.photoUrl}
+                onChange={(event) => setForm({ ...form, photoUrl: event.target.value })}
+                placeholder="Paste a direct image link"
+                helperText="Optional. Use a direct http(s) image URL from a source you are allowed to share."
                 fullWidth
                 sx={{ mt: 1.5 }}
               />

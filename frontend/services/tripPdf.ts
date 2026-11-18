@@ -240,12 +240,17 @@ class ReportRenderer {
     const mapUrl = plan.googleMapUrl || (hasCoordinates
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${plan.latitude},${plan.longitude}`)}`
       : "");
+    const reportLinks = [
+      ...(mapUrl ? [{ label: "View on Google Maps", url: mapUrl }] : []),
+      ...(plan.photoUrl ? [{ label: "View attached photo", url: plan.photoUrl }] : []),
+    ];
     const locationLabel = plan.locationName ? `Pinned location: ${plan.locationName}` : "Pinned location";
     const locationLabelHeight = hasCoordinates
       ? Math.min(wrapLines(this.ctx, locationLabel, contentWidth, 12, 800).length, 2) * 17
       : 0;
-    const mapSectionHeight = hasCoordinates || mapUrl
-      ? 12 + (hasCoordinates ? locationLabelHeight + 17 : 0) + (hasCoordinates && mapUrl ? 6 : 0) + (mapUrl ? 18 : 0)
+    const reportLinkHeight = reportLinks.length * 18 + Math.max(reportLinks.length - 1, 0) * 6;
+    const mapSectionHeight = hasCoordinates || reportLinks.length > 0
+      ? 12 + (hasCoordinates ? locationLabelHeight + 17 : 0) + (hasCoordinates && reportLinks.length > 0 ? 6 : 0) + reportLinkHeight
       : 0;
     const height = 30 + titleHeight + 11 + detailHeight + mapSectionHeight + 19;
     const accent = plan.completed ? "#94a3b8" : "#2563eb";
@@ -281,7 +286,7 @@ class ReportRenderer {
       color: plan.completed ? "#64748b" : "#334155",
     });
 
-    if (hasCoordinates || mapUrl) {
+    if (hasCoordinates || reportLinks.length > 0) {
       let mapY = this.y + 30 + titleHeight + 11 + detailHeight + 12;
 
       if (hasCoordinates) {
@@ -300,17 +305,19 @@ class ReportRenderer {
         mapY += 17;
       }
 
-      if (mapUrl) {
+      if (reportLinks.length > 0) {
         if (hasCoordinates) {
           mapY += 6;
         }
-        const linkLabel = "View on Google Maps";
-        drawText(this.ctx, linkLabel, contentX, mapY, {
-          size: 12,
-          weight: 800,
-          color: "#2563eb",
+        reportLinks.forEach((link) => {
+          drawText(this.ctx, link.label, contentX, mapY, {
+            size: 12,
+            weight: 800,
+            color: "#2563eb",
+          });
+          this.addLink(contentX, mapY - 2, textWidth(this.ctx, link.label, 12, 800), 18, link.url);
+          mapY += 24;
         });
-        this.addLink(contentX, mapY - 2, textWidth(this.ctx, linkLabel, 12, 800), 18, mapUrl);
       }
     }
 

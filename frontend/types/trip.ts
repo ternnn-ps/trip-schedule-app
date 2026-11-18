@@ -8,6 +8,7 @@ export type TripPlanItem = {
   latitude?: string;
   longitude?: string;
   googleMapUrl?: string;
+  photoUrl?: string;
   completed?: boolean;
 };
 
