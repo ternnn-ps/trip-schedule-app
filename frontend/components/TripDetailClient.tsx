@@ -130,6 +130,24 @@ function getDaySectionId(day: string) {
   return `itinerary-${day.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 }
 
+function getItineraryDayDate(day: string, dateRange: string) {
+  const dayNumber = parsePlanDayNumber(day);
+  const tripDates = parseTripDateRange(dateRange);
+
+  if (!dayNumber || !tripDates) {
+    return "";
+  }
+
+  const date = new Date(`${tripDates.startDate}T00:00:00`);
+  date.setDate(date.getDate() + dayNumber - 1);
+
+  return new Intl.DateTimeFormat("en", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
+
 function getUserDisplayName(user: User) {
   return user.userFullName?.trim() || user.userName?.trim() || user.email?.trim() || "Unnamed user";
 }
@@ -824,6 +842,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
             <Stack className="itinerary-day-nav" direction="row" spacing={1}>
               {itineraryDays.map(([day, dayPlans], index) => {
                 const isActive = activeItineraryDay ? activeItineraryDay === day : index === 0;
+                const dayDate = getItineraryDayDate(day, trip.dateRange);
 
                 return (
                   <Button
@@ -835,7 +854,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                     <Box>
                       <Typography component="span" className="itinerary-day-nav-title">{day}</Typography>
                       <Typography component="span" className="itinerary-day-nav-count">
-                        {dayPlans.length} {dayPlans.length === 1 ? "stop" : "stops"}
+                        {dayDate ? `${dayDate} · ` : ""}{dayPlans.length} {dayPlans.length === 1 ? "stop" : "stops"}
                       </Typography>
                     </Box>
                   </Button>
@@ -847,6 +866,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
           <Stack spacing={2.5} sx={{ mt: 2 }}>
             {itineraryDays.map(([day, dayPlans]) => {
               const isCollapsed = collapsedDays.includes(day);
+              const dayDate = getItineraryDayDate(day, trip.dateRange);
 
               return (
               <Box key={day} id={getDaySectionId(day)} className={`day-section${isCollapsed ? " is-collapsed" : ""}`}>
@@ -859,7 +879,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                     <Box sx={{ textAlign: "left" }}>
                       <Typography component="span" className="day-section-title">{day}</Typography>
                       <Typography component="span" className="day-section-count">
-                        {dayPlans.length} {dayPlans.length === 1 ? "stop" : "stops"}
+                        {dayDate ? `${dayDate} · ` : ""}{dayPlans.length} {dayPlans.length === 1 ? "stop" : "stops"}
                       </Typography>
                     </Box>
                     <KeyboardArrowDownIcon className={`day-section-toggle-icon${isCollapsed ? " is-collapsed" : ""}`} />
