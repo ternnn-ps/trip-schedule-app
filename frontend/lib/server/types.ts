@@ -21,6 +21,7 @@ export type TripPlanInput = {
   longitude?: string;
   googleMapUrl?: string;
   photoUrl?: string;
+  photoUrls?: string[];
   completed?: boolean;
 };
 

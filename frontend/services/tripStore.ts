@@ -112,6 +112,7 @@ function normalizeTrip(trip: Trip): Trip {
           longitude: plan.longitude ?? "",
           googleMapUrl: plan.googleMapUrl ?? "",
           photoUrl: plan.photoUrl ?? "",
+          photoUrls: Array.isArray(plan.photoUrls) ? plan.photoUrls : plan.photoUrl ? [plan.photoUrl] : [],
           completed: Boolean(plan.completed),
         }))
       : [],

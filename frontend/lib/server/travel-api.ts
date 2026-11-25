@@ -24,6 +24,7 @@ type PlanRow = {
   longitude: string | null;
   google_map_url: string | null;
   photo_url: string | null;
+  photo_urls: unknown;
   completed: boolean | null;
 };
 
@@ -31,6 +32,12 @@ type UserRow = ApiUser & { passwordHash?: string };
 
 function normalize(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizePhotoUrls(value: unknown) {
+  const values = Array.isArray(value) ? value : [];
+
+  return Array.from(new Set(values.map(normalize).filter(Boolean))).slice(0, 3);
 }
 
 function uniqueNames(values: unknown, include?: string) {
@@ -81,7 +88,7 @@ async function getTrip(client: PoolClient, id: string) {
     ),
     client.query<PlanRow>(
       `SELECT id, plan_day AS day, plan_time AS time, detail, place, location_name, latitude, longitude,
-              google_map_url, photo_url, completed
+              google_map_url, photo_url, photo_urls, completed
          FROM ms_trip_plan
         WHERE trip_id = $1 AND record_status = 'A'
         ORDER BY created_date ASC`,
@@ -99,7 +106,14 @@ async function getTrip(client: PoolClient, id: string) {
     allUsers: Boolean(trip.all_users),
     users: usersResult.rows.map((row) => row.user_name),
     pendingUsers: pendingResult.rows.map((row) => row.user_name),
-    plans: plansResult.rows.map((plan) => ({
+    plans: plansResult.rows.map((plan) => {
+      const photoUrls = normalizePhotoUrls(plan.photo_urls);
+
+      if (photoUrls.length === 0 && plan.photo_url) {
+        photoUrls.push(plan.photo_url);
+      }
+
+      return {
       id: plan.id,
       day: plan.day,
       time: plan.time,
@@ -109,9 +123,11 @@ async function getTrip(client: PoolClient, id: string) {
       latitude: plan.latitude ?? "",
       longitude: plan.longitude ?? "",
       googleMapUrl: plan.google_map_url ?? "",
-      photoUrl: plan.photo_url ?? "",
+      photoUrl: photoUrls[0] ?? "",
+      photoUrls,
       completed: Boolean(plan.completed),
-    })),
+      };
+    }),
   };
 }
 
@@ -133,11 +149,13 @@ async function updateOrderedNames(
 
 async function writePlan(client: PoolClient, tripId: string, plan: TripPlanInput, now: Date) {
   const id = normalize(plan.id) || makeId("plan");
+  const photoUrls = normalizePhotoUrls(plan.photoUrls);
+  const photoUrl = normalize(plan.photoUrl) || photoUrls[0] || "";
   await client.query(
     `INSERT INTO ms_trip_plan (
-      id, plan_day, plan_time, detail, place, location_name, latitude, longitude, google_map_url, photo_url,
+      id, plan_day, plan_time, detail, place, location_name, latitude, longitude, google_map_url, photo_url, photo_urls,
       completed, trip_id, created_date, updated_date, record_status
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $13, 'A')`,
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12, $13, $14, $14, 'A')`,
     [
       id,
       normalize(plan.day),
@@ -148,7 +166,8 @@ async function writePlan(client: PoolClient, tripId: string, plan: TripPlanInput
       normalize(plan.latitude),
       normalize(plan.longitude),
       normalize(plan.googleMapUrl),
-      normalize(plan.photoUrl),
+      photoUrl,
+      JSON.stringify(photoUrls),
       Boolean(plan.completed),
       tripId,
       now,
@@ -315,11 +334,13 @@ export async function updateTripPlan(tripId: string, planId: string, plan: TripP
     if (!trip) return null;
     const existing = trip.plans.find((item) => item.id === planId);
     if (!existing) return undefined;
+    const photoUrls = normalizePhotoUrls(plan.photoUrls);
+    const photoUrl = normalize(plan.photoUrl) || photoUrls[0] || "";
     await client.query(
       `UPDATE ms_trip_plan SET plan_day = $3, plan_time = $4, detail = $5, place = $6, location_name = $7,
-        latitude = $8, longitude = $9, google_map_url = $10, photo_url = $11, completed = $12, updated_date = NOW()
+        latitude = $8, longitude = $9, google_map_url = $10, photo_url = $11, photo_urls = $12::jsonb, completed = $13, updated_date = NOW()
        WHERE id = $1 AND trip_id = $2 AND record_status = 'A'`,
-      [planId, tripId, normalize(plan.day), normalize(plan.time), normalize(plan.detail), normalize(plan.place), normalize(plan.locationName), normalize(plan.latitude), normalize(plan.longitude), normalize(plan.googleMapUrl), normalize(plan.photoUrl), Boolean(plan.completed)],
+      [planId, tripId, normalize(plan.day), normalize(plan.time), normalize(plan.detail), normalize(plan.place), normalize(plan.locationName), normalize(plan.latitude), normalize(plan.longitude), normalize(plan.googleMapUrl), photoUrl, JSON.stringify(photoUrls), Boolean(plan.completed)],
     );
     await client.query("UPDATE ms_trip SET updated_by = 'Admin', updated_date = NOW() WHERE id = $1", [tripId]);
     return getTrip(client, tripId);

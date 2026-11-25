@@ -240,9 +240,16 @@ class ReportRenderer {
     const mapUrl = plan.googleMapUrl || (hasCoordinates
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${plan.latitude},${plan.longitude}`)}`
       : "");
+    const photoUrls = Array.from(new Set([
+      ...(plan.photoUrls ?? []),
+      plan.photoUrl ?? "",
+    ].map((photoUrl) => photoUrl.trim()).filter(Boolean))).slice(0, 3);
     const reportLinks = [
       ...(mapUrl ? [{ label: "View on Google Maps", url: mapUrl }] : []),
-      ...(plan.photoUrl ? [{ label: "View attached photo", url: plan.photoUrl }] : []),
+      ...photoUrls.map((photoUrl, index) => ({
+        label: photoUrls.length === 1 ? "View attached photo" : `View attached photo ${index + 1}`,
+        url: photoUrl,
+      })),
     ];
     const locationLabel = plan.locationName ? `Pinned location: ${plan.locationName}` : "Pinned location";
     const locationLabelHeight = hasCoordinates

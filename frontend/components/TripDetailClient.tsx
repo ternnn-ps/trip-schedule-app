@@ -83,7 +83,7 @@ const emptyPlanForm = {
   latitude: "",
   longitude: "",
   googleMapUrl: "",
-  photoUrl: "",
+  photoUrls: [] as string[],
 };
 
 const emptyTripEditForm = {
@@ -156,6 +156,13 @@ function isValidExternalUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+function getPlanPhotoUrls(plan: TripPlanItem) {
+  return Array.from(new Set([
+    ...(Array.isArray(plan.photoUrls) ? plan.photoUrls : []),
+    plan.photoUrl ?? "",
+  ].map((url) => url.trim()).filter(Boolean))).slice(0, 3);
 }
 
 function getUserDisplayName(user: User) {
@@ -350,7 +357,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       latitude: plan.latitude ?? "",
       longitude: plan.longitude ?? "",
       googleMapUrl: plan.googleMapUrl ?? "",
-      photoUrl: plan.photoUrl ?? "",
+      photoUrls: getPlanPhotoUrls(plan),
     });
     setEditingPlanId(plan.id);
     setError("");
@@ -404,7 +411,9 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       return;
     }
 
-    if (form.photoUrl.trim() && !isValidExternalUrl(form.photoUrl.trim())) {
+    const photoUrls = form.photoUrls.map((photoUrl) => photoUrl.trim()).filter(Boolean);
+
+    if (photoUrls.some((photoUrl) => !isValidExternalUrl(photoUrl))) {
       setError("Photo URL must start with http:// or https://.");
       return;
     }
@@ -432,7 +441,8 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
       latitude: form.latitude.trim(),
       longitude: form.longitude.trim(),
       googleMapUrl: form.googleMapUrl.trim(),
-      photoUrl: form.photoUrl.trim(),
+      photoUrl: photoUrls[0] ?? "",
+      photoUrls,
       completed: editingPlanId
         ? Boolean(trip.plans.find((plan) => plan.id === editingPlanId)?.completed)
         : false,
@@ -906,6 +916,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                   <Stack className="day-section-content" spacing={1.5}>
                   {dayPlans.map((plan) => {
                     const googleMapUrl = getGoogleMapUrl(plan);
+                    const photoUrls = getPlanPhotoUrls(plan);
 
                     return (
                     <Box key={plan.id} className="itinerary-timeline-item">
@@ -955,25 +966,30 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                               ) : null}
                             </Stack>
                           </Stack>
-                          {plan.photoUrl ? (
-                            <a
-                              className="plan-photo-link"
-                              href={plan.photoUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              {/* Arbitrary user image hosts cannot be safely preconfigured for next/image. */}
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                className="plan-photo"
-                                src={plan.photoUrl}
-                                alt={`Photo for ${plan.place}`}
-                                loading="lazy"
-                                onError={(event) => {
-                                  event.currentTarget.style.display = "none";
-                                }}
-                              />
-                            </a>
+                          {photoUrls.length > 0 ? (
+                            <Box className="plan-photo-gallery">
+                              {photoUrls.map((photoUrl, index) => (
+                                <a
+                                  key={photoUrl}
+                                  className="plan-photo-link"
+                                  href={photoUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  {/* Arbitrary user image hosts cannot be safely preconfigured for next/image. */}
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    className="plan-photo"
+                                    src={photoUrl}
+                                    alt={`Photo ${index + 1} for ${plan.place}`}
+                                    loading="lazy"
+                                    onError={(event) => {
+                                      event.currentTarget.parentElement?.remove();
+                                    }}
+                                  />
+                                </a>
+                              ))}
+                            </Box>
                           ) : null}
                           {plan.latitude && plan.longitude ? (
                             <Box className="plan-place-panel">
@@ -1384,16 +1400,50 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                 fullWidth
                 sx={{ mt: 1.5 }}
               />
-              <TextField
-                label="Photo URL"
-                type="url"
-                value={form.photoUrl}
-                onChange={(event) => setForm({ ...form, photoUrl: event.target.value })}
-                placeholder="Paste a direct image link"
-                helperText="Optional. Use a direct http(s) image URL from a source you are allowed to share."
-                fullWidth
-                sx={{ mt: 1.5 }}
-              />
+              <Stack direction="row" sx={{ mt: 1.5, alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+                <Typography className="plan-form-section-title">Photos</Typography>
+                <Button
+                  type="button"
+                  size="small"
+                  startIcon={<AddIcon />}
+                  disabled={form.photoUrls.length >= 3}
+                  onClick={() => setForm((currentForm) => ({
+                    ...currentForm,
+                    photoUrls: [...currentForm.photoUrls, ""],
+                  }))}
+                >
+                  Add photo
+                </Button>
+              </Stack>
+              <Stack spacing={1}>
+                {form.photoUrls.map((photoUrl, index) => (
+                  <Stack key={`${index}-${photoUrl}`} direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
+                    <TextField
+                      label={`Photo URL ${index + 1}`}
+                      type="url"
+                      value={photoUrl}
+                      onChange={(event) => setForm((currentForm) => ({
+                        ...currentForm,
+                        photoUrls: currentForm.photoUrls.map((currentPhotoUrl, currentIndex) => (
+                          currentIndex === index ? event.target.value : currentPhotoUrl
+                        )),
+                      }))}
+                      placeholder="Paste a direct image link"
+                      fullWidth
+                    />
+                    <IconButton
+                      type="button"
+                      aria-label={`Remove photo ${index + 1}`}
+                      onClick={() => setForm((currentForm) => ({
+                        ...currentForm,
+                        photoUrls: currentForm.photoUrls.filter((_, currentIndex) => currentIndex !== index),
+                      }))}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Stack>
+                ))}
+              </Stack>
             </Box>
           </Stack>
         </DialogContent>

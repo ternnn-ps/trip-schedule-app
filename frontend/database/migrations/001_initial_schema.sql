@@ -1,5 +1,5 @@
 -- Run this in the Neon SQL Editor only for a fresh database.
--- Existing databases created by the Spring Boot backend need migrations 002 and 003 as well.
+-- Existing databases created by the Spring Boot backend need migrations 002, 003, and 004 as well.
 
 CREATE TABLE IF NOT EXISTS ms_user (
   user_id BIGSERIAL PRIMARY KEY,
@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS ms_trip_plan (
   longitude VARCHAR(255),
   google_map_url VARCHAR(1000),
   photo_url VARCHAR(1000),
+  photo_urls JSONB NOT NULL DEFAULT '[]'::jsonb,
   completed BOOLEAN DEFAULT FALSE,
   trip_id VARCHAR(255) NOT NULL REFERENCES ms_trip(id) ON DELETE CASCADE,
   created_date TIMESTAMP,
