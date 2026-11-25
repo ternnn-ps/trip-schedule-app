@@ -50,10 +50,66 @@ function sortParams(searchParams: URLSearchParams) {
   return searchParams.getAll("sort");
 }
 
+function isPrivateImageHost(hostname: string) {
+  const host = hostname.toLowerCase();
+
+  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local")) return true;
+  if (host === "::1" || host === "0.0.0.0") return true;
+
+  const ipv4 = host.split(".").map(Number);
+  if (ipv4.length !== 4 || ipv4.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return false;
+
+  return ipv4[0] === 10
+    || ipv4[0] === 127
+    || (ipv4[0] === 169 && ipv4[1] === 254)
+    || (ipv4[0] === 172 && ipv4[1] >= 16 && ipv4[1] <= 31)
+    || (ipv4[0] === 192 && ipv4[1] === 168);
+}
+
+async function proxyImage(urlValue: string | null) {
+  if (!urlValue) return new NextResponse("Image URL is required", { status: 400 });
+
+  let imageUrl: URL;
+  try {
+    imageUrl = new URL(urlValue);
+  } catch {
+    return new NextResponse("Invalid image URL", { status: 400 });
+  }
+
+  if (!/^https?:$/.test(imageUrl.protocol) || isPrivateImageHost(imageUrl.hostname)) {
+    return new NextResponse("Unsupported image URL", { status: 400 });
+  }
+
+  const response = await fetch(imageUrl, {
+    headers: { accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8" },
+    redirect: "error",
+    signal: AbortSignal.timeout(8_000),
+  });
+  const contentType = response.headers.get("content-type") ?? "";
+  const contentLength = Number(response.headers.get("content-length") ?? 0);
+
+  if (!response.ok || !contentType.startsWith("image/") || contentLength > 6_000_000) {
+    return new NextResponse("Image is unavailable", { status: 422 });
+  }
+
+  const image = await response.arrayBuffer();
+  if (image.byteLength > 6_000_000) {
+    return new NextResponse("Image is too large", { status: 413 });
+  }
+
+  return new NextResponse(image, {
+    headers: {
+      "cache-control": "public, max-age=86400, s-maxage=86400",
+      "content-type": contentType,
+    },
+  });
+}
+
 export async function GET(request: NextRequest, context: Context) {
   try {
     const { path } = await context.params;
     const search = request.nextUrl.searchParams;
+    if (path.join("/") === "media/image") return proxyImage(search.get("url"));
     if (path.join("/") === "ping") {
       await query("SELECT 1");
       return new NextResponse("OK", { headers: { "content-type": "text/plain" } });

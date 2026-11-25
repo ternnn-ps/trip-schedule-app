@@ -24,12 +24,48 @@ type PdfLink = {
   url: string;
 };
 
+type LoadedReportImage = {
+  url: string;
+  image: HTMLImageElement;
+};
+
 function safeText(value?: string) {
   return value?.replace(/\r\n?/g, "\n").trim() || "";
 }
 
 function inlineText(value?: string) {
   return safeText(value).replace(/\s+/g, " ").trim();
+}
+
+function getPlanPhotoUrls(plan: TripPlanItem) {
+  return Array.from(new Set([
+    ...(plan.photoUrls ?? []),
+    plan.photoUrl ?? "",
+  ].map((photoUrl) => photoUrl.trim()).filter(Boolean))).slice(0, 3);
+}
+
+function loadReportImage(url: string) {
+  return new Promise<LoadedReportImage | null>((resolve) => {
+    const image = new Image();
+    const timeout = window.setTimeout(() => resolve(null), 10_000);
+
+    image.onload = () => {
+      window.clearTimeout(timeout);
+      resolve({ url, image });
+    };
+    image.onerror = () => {
+      window.clearTimeout(timeout);
+      resolve(null);
+    };
+    image.src = `/api/media/image?url=${encodeURIComponent(url)}`;
+  });
+}
+
+async function loadReportImages(trip: Trip) {
+  const photoUrls = Array.from(new Set(trip.plans.flatMap(getPlanPhotoUrls)));
+  const loaded = await Promise.all(photoUrls.map(loadReportImage));
+
+  return new Map(loaded.filter((item): item is LoadedReportImage => Boolean(item)).map((item) => [item.url, item.image]));
 }
 
 function makeFileName(value: string) {
@@ -169,7 +205,7 @@ class ReportRenderer {
   private pages: ReportPage[] = [];
   private y = pageMargin;
 
-  constructor(private trip: Trip) {
+  constructor(private trip: Trip, private images: Map<string, HTMLImageElement>) {
     this.newPage();
     this.drawCoverHeader();
   }
@@ -240,10 +276,11 @@ class ReportRenderer {
     const mapUrl = plan.googleMapUrl || (hasCoordinates
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${plan.latitude},${plan.longitude}`)}`
       : "");
-    const photoUrls = Array.from(new Set([
-      ...(plan.photoUrls ?? []),
-      plan.photoUrl ?? "",
-    ].map((photoUrl) => photoUrl.trim()).filter(Boolean))).slice(0, 3);
+    const photoUrls = getPlanPhotoUrls(plan);
+    const reportImages = photoUrls.flatMap((url) => {
+      const image = this.images.get(url);
+      return image ? [{ url, image }] : [];
+    });
     const reportLinks = [
       ...(mapUrl ? [{ label: "View on Google Maps", url: mapUrl }] : []),
       ...photoUrls.map((photoUrl, index) => ({
@@ -256,10 +293,11 @@ class ReportRenderer {
       ? Math.min(wrapLines(this.ctx, locationLabel, contentWidth, 12, 800).length, 2) * 17
       : 0;
     const reportLinkHeight = reportLinks.length * 18 + Math.max(reportLinks.length - 1, 0) * 6;
+    const photoSectionHeight = reportImages.length > 0 ? 130 : 0;
     const mapSectionHeight = hasCoordinates || reportLinks.length > 0
       ? 12 + (hasCoordinates ? locationLabelHeight + 17 : 0) + (hasCoordinates && reportLinks.length > 0 ? 6 : 0) + reportLinkHeight
       : 0;
-    const height = 30 + titleHeight + 11 + detailHeight + mapSectionHeight + 19;
+    const height = 19 + titleHeight + 11 + detailHeight + photoSectionHeight + mapSectionHeight + 19;
     const accent = plan.completed ? "#94a3b8" : "#2563eb";
 
     this.ensureSpace(height + 14);
@@ -293,8 +331,22 @@ class ReportRenderer {
       color: plan.completed ? "#64748b" : "#334155",
     });
 
+    const contentEnd = this.y + 19 + titleHeight + 11 + detailHeight;
+
+    if (reportImages.length > 0) {
+      const imageGap = 8;
+      const imageWidth = (contentWidth - imageGap * (reportImages.length - 1)) / reportImages.length;
+      const imageY = contentEnd + 12;
+
+      reportImages.forEach((reportImage, imageIndex) => {
+        const imageX = contentX + imageIndex * (imageWidth + imageGap);
+        this.drawPhoto(reportImage.image, imageX, imageY, imageWidth, 118);
+        this.addLink(imageX, imageY, imageWidth, 118, reportImage.url);
+      });
+    }
+
     if (hasCoordinates || reportLinks.length > 0) {
-      let mapY = this.y + 30 + titleHeight + 11 + detailHeight + 12;
+      let mapY = contentEnd + photoSectionHeight + 12;
 
       if (hasCoordinates) {
         drawWrappedText(this.ctx, locationLabel, contentX, mapY, contentWidth, 17, {
@@ -341,6 +393,26 @@ class ReportRenderer {
       color: "#047857",
       align: "center",
     });
+  }
+
+  private drawPhoto(image: HTMLImageElement, x: number, y: number, width: number, height: number) {
+    const sourceWidth = image.naturalWidth || image.width;
+    const sourceHeight = image.naturalHeight || image.height;
+    const scale = Math.max(width / sourceWidth, height / sourceHeight);
+    const cropWidth = width / scale;
+    const cropHeight = height / scale;
+    const cropX = (sourceWidth - cropWidth) / 2;
+    const cropY = (sourceHeight - cropHeight) / 2;
+
+    this.ctx.save();
+    roundRect(this.ctx, x, y, width, height, 7);
+    this.ctx.clip();
+    this.ctx.drawImage(image, cropX, cropY, cropWidth, cropHeight, x, y, width, height);
+    this.ctx.restore();
+
+    this.ctx.strokeStyle = "#e2e8f0";
+    roundRect(this.ctx, x, y, width, height, 7);
+    this.ctx.stroke();
   }
 
   private get ctx() {
@@ -468,8 +540,8 @@ class ReportRenderer {
   }
 }
 
-function renderTripReport(trip: Trip) {
-  const renderer = new ReportRenderer(trip);
+function renderTripReport(trip: Trip, images: Map<string, HTMLImageElement>) {
+  const renderer = new ReportRenderer(trip, images);
 
   if (trip.notes.trim()) {
     renderer.summaryCard("Notes", trip.notes);
@@ -621,7 +693,8 @@ export async function downloadTripReport(trip: Trip) {
     await document.fonts.ready;
   }
 
-  const pages = renderTripReport(trip);
+  const images = await loadReportImages(trip);
+  const pages = renderTripReport(trip, images);
   const pdf = buildPdfFromPages(pages);
   const blob = new Blob([pdf], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
