@@ -293,7 +293,8 @@ class ReportRenderer {
       ? Math.min(wrapLines(this.ctx, locationLabel, contentWidth, 12, 800).length, 2) * 17
       : 0;
     const reportLinkHeight = reportLinks.length * 18 + Math.max(reportLinks.length - 1, 0) * 6;
-    const photoSectionHeight = reportImages.length > 0 ? 130 : 0;
+    const photoHeight = reportImages.length === 1 ? 190 : 118;
+    const photoSectionHeight = reportImages.length > 0 ? photoHeight + 12 : 0;
     const mapSectionHeight = hasCoordinates || reportLinks.length > 0
       ? 12 + (hasCoordinates ? locationLabelHeight + 17 : 0) + (hasCoordinates && reportLinks.length > 0 ? 6 : 0) + reportLinkHeight
       : 0;
@@ -340,8 +341,8 @@ class ReportRenderer {
 
       reportImages.forEach((reportImage, imageIndex) => {
         const imageX = contentX + imageIndex * (imageWidth + imageGap);
-        this.drawPhoto(reportImage.image, imageX, imageY, imageWidth, 118);
-        this.addLink(imageX, imageY, imageWidth, 118, reportImage.url);
+        this.drawPhoto(reportImage.image, imageX, imageY, imageWidth, photoHeight);
+        this.addLink(imageX, imageY, imageWidth, photoHeight, reportImage.url);
       });
     }
 

@@ -712,6 +712,15 @@ html[data-theme="dark"] .sidebar-shell {
   object-fit: cover;
 }
 
+.plan-photo-link:only-child {
+  grid-column: 1 / -1;
+}
+
+.plan-photo-link:only-child .plan-photo {
+  height: 190px;
+  aspect-ratio: auto;
+}
+
 .plan-map-actions .MuiButton-root {
   min-width: 0;
   white-space: nowrap;
@@ -1389,6 +1398,10 @@ html[data-theme="dark"] .map-preview {
   }
 
   .map-preview {
+    height: 230px;
+  }
+
+  .plan-photo-link:only-child .plan-photo {
     height: 230px;
   }
 
