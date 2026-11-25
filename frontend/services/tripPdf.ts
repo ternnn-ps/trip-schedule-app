@@ -293,7 +293,7 @@ class ReportRenderer {
       ? Math.min(wrapLines(this.ctx, locationLabel, contentWidth, 12, 800).length, 2) * 17
       : 0;
     const reportLinkHeight = reportLinks.length * 18 + Math.max(reportLinks.length - 1, 0) * 6;
-    const photoHeight = reportImages.length === 1 ? 190 : 118;
+    const photoHeight = reportImages.length <= 2 ? 190 : 118;
     const photoSectionHeight = reportImages.length > 0 ? photoHeight + 12 : 0;
     const mapSectionHeight = hasCoordinates || reportLinks.length > 0
       ? 12 + (hasCoordinates ? locationLabelHeight + 17 : 0) + (hasCoordinates && reportLinks.length > 0 ? 6 : 0) + reportLinkHeight

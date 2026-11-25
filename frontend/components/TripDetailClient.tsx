@@ -967,7 +967,7 @@ export default function TripDetailClient({ tripId }: { tripId: string }) {
                             </Stack>
                           </Stack>
                           {photoUrls.length > 0 ? (
-                            <Box className="plan-photo-gallery">
+                            <Box className={`plan-photo-gallery plan-photo-gallery-${photoUrls.length}`}>
                               {photoUrls.map((photoUrl, index) => (
                                 <a
                                   key={photoUrl}

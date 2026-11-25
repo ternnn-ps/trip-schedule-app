@@ -705,6 +705,14 @@ html[data-theme="dark"] .sidebar-shell {
   gap: 8px;
 }
 
+.plan-photo-gallery-1 {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.plan-photo-gallery-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .plan-photo {
   display: block;
   width: 100%;
@@ -712,11 +720,8 @@ html[data-theme="dark"] .sidebar-shell {
   object-fit: cover;
 }
 
-.plan-photo-link:only-child {
-  grid-column: 1 / -1;
-}
-
-.plan-photo-link:only-child .plan-photo {
+.plan-photo-gallery-1 .plan-photo,
+.plan-photo-gallery-2 .plan-photo {
   height: 190px;
   aspect-ratio: auto;
 }
@@ -1401,7 +1406,8 @@ html[data-theme="dark"] .map-preview {
     height: 230px;
   }
 
-  .plan-photo-link:only-child .plan-photo {
+  .plan-photo-gallery-1 .plan-photo,
+  .plan-photo-gallery-2 .plan-photo {
     height: 230px;
   }
 
